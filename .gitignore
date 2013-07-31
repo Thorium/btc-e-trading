@@ -1,0 +1,9 @@
+bin/
+obj/
+Debug/
+_UpgradeReport_Files/
+Backup/
+Backup1/
+
+*.suo
+UpgradeLog*
