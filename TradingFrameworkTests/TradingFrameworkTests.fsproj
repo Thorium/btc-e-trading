@@ -52,7 +52,7 @@
     <Compile Include="TestArbitrage.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\btc-e-bot\TradingFramework.fsproj">
+    <ProjectReference Include="..\TradingFramework\TradingFramework.fsproj">
       <Name>TradingFramework</Name>
       <Project>{7429e955-e3a1-440c-99e1-54685a2cd736}</Project>
       <Private>True</Private>
