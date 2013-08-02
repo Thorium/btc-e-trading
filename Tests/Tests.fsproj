@@ -48,6 +48,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MockDownloader.fs" />
     <Compile Include="TestArbitrage.fs" />
   </ItemGroup>
   <ItemGroup>
