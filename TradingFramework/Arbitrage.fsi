@@ -5,18 +5,23 @@ open System
 open BtceApiFramework.Currency
 open BtceApiFramework.PublicBtceApi
 
+type Vertex = { 
+    currency: Currency
+}
+
 type Edge = { 
     transactionFee: Decimal;
     ask: Decimal;
     sell: Decimal;
-    currencyPair: Pair
+    currencyPair: Pair;
+    vertices: Vertex * Vertex;
 }
 
-type Vertex = { 
-    currency: Currency;
-    edges: Edge list 
+type AdjacencyList = {
+    vertex: Vertex;
+    edges: Edge list
 }
 
-type Graph = { vertices: Vertex list }
+type Graph = { adjacencyLists: AdjacencyList list }
 
-val createGraph : (unit -> Info) -> (Pair list -> (Pair * Quote) list) -> Graph
+val public createGraph: (unit -> Info) -> (Pair list -> (Pair * Quote) list) -> Graph
