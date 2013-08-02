@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "btc-e-bot", "btc-e-bot\btc-e-bot.fsproj", "{7429E955-E3A1-440C-99E1-54685A2CD736}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TradingFramework", "btc-e-bot\TradingFramework.fsproj", "{7429E955-E3A1-440C-99E1-54685A2CD736}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7E5C9D0A-B43F-4769-BB25-C0A2335625AF}"
 	ProjectSection(SolutionItems) = preProject
@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{EE1B722C-3D64-4DB9-A2F0-0F95213AD677}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TradingFrameworkTests", "Tests\TradingFrameworkTests.fsproj", "{EE1B722C-3D64-4DB9-A2F0-0F95213AD677}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
