@@ -1,4 +1,4 @@
-#F# Unaffiliated BTC-E Arbitrage Bot
+#F# Unaffiliated BTC-E Trading Framework
 
 Just started development.
 
