@@ -28,10 +28,21 @@ type Vertex = {
     currency: Currency
 }
 
-type Edge = { 
+type EdgeDirection =
+    | Left = 0
+    | Right = 1
+
+type PairTicker = {
     transactionFee: Decimal;
-    ask: Decimal;
+    pair: Pair;
     sell: Decimal;
+    ask: Decimal
+}
+
+type Edge = { 
+    direction: EdgeDirection;
+    exchangeRate: Decimal;
+    pairTicker: PairTicker;
     currencyPair: Pair;
     vertices: Vertex * Vertex;
 }
@@ -42,6 +53,14 @@ type AdjacencyList = {
 }
 
 type Graph = { adjacencyLists: AdjacencyList list }
+
+let getExchangeRate (fromCurrency: Currency) (info: PairTicker) : Decimal =
+    match info.pair with
+        | (left, right) when left = fromCurrency -> 
+            info.sell + (info.sell * info.transactionFee)
+        | (left, right) when right = fromCurrency -> 
+            info.ask - (info.ask * info.transactionFee)
+        | _ -> failwith ("From and to currencies did not match currency pair: " + currencyPairToString(info.pair))
 
 let createGraph (getInfo: unit -> Info) (getPriceQuotes: Pair list -> (Pair * Quote) list) : Graph =
     let info = getInfo()
@@ -63,10 +82,25 @@ let createGraph (getInfo: unit -> Info) (getPriceQuotes: Pair list -> (Pair * Qu
 
     let edges = [ for (pair, quote, pairInfo) in graphInfo do
                         let (left, right) = pair
-                        yield {
+
+                        let pairTicker = {
                             transactionFee = pairInfo.fee;
-                            ask = quote.buy;
+                            pair = pair;
                             sell = quote.sell;
+                            ask = quote.buy
+                        }
+
+                        yield {
+                            direction = EdgeDirection.Left;
+                            exchangeRate = getExchangeRate right pairTicker;
+                            pairTicker = pairTicker;
+                            currencyPair = pair;
+                            vertices = (findVertexWithCurrency(left), findVertexWithCurrency(right))
+                        }
+                        yield {
+                            direction = EdgeDirection.Right;
+                            exchangeRate = getExchangeRate left pairTicker;
+                            pairTicker = pairTicker;
                             currencyPair = pair;
                             vertices = (findVertexWithCurrency(left), findVertexWithCurrency(right))
                         } ]
@@ -77,27 +111,40 @@ let createGraph (getInfo: unit -> Info) (getPriceQuotes: Pair list -> (Pair * Qu
                                 vertex = vertex; 
                                 edges = [ for edge in edges do
                                             match edge.currencyPair with
-                                                | (x, y) when x = vertex.currency || y = vertex.currency -> yield edge
+                                                | (x, y) when edge.direction = EdgeDirection.Left && y = vertex.currency 
+                                                    -> yield edge
+                                                | (x, y) when edge.direction = EdgeDirection.Right && x = vertex.currency 
+                                                    -> yield edge
                                                 | _ -> () ]
                             } ]
     }
 
-// Find shortest paths - shortest path = highest amount of money made; shortest path to the vertex you start from
+let pathProfit (path: Edge list) : Decimal =
+    List.fold (fun rate edge -> rate * edge.exchangeRate) (new Decimal(1)) path
 
-let findShortestPath (from: Vertex) : Vertex list =
-    []
+let comparePaths (lhs: Edge list) (rhs: Edge list) =
+    ignore
 
-(*
- a*
+let adjacencyListForVertex (vertex: Vertex) (graph: Graph) : AdjacencyList =
+    List.find (fun x -> x.vertex = vertex) graph.adjacencyLists
 
-paths
+let adjacencyListForCurrency (currency: Currency) (graph: Graph) : AdjacencyList =
+    List.find (fun x -> x.vertex.currency = currency) graph.adjacencyLists
 
- 
+let paths (from: AdjacencyList) (graph: Graph) : (Edge list) list = 
+    let rec processList (from: Vertex) (edges: Edge list) (pairsVisited: Pair list) : (Edge list) list = 
+        let mutable paths: Edge list list = []
 
- start with the edge with the lowest cost
-    keep measure of cost of each path
+        for edge in edges do
+            if not <| List.exists (fun x -> x = edge.currencyPair) pairsVisited then
+                let toVertex = match edge.vertices with
+                                    | (x, y) when y = from -> x
+                                    | (x, y) when x = from -> y
+                                    | _ -> failwith ("Expected edge to contain vertex: " + from.currency.ToString())
 
+                let adjacencyList = (adjacencyListForVertex toVertex graph)
+                paths <- (processList adjacencyList.vertex adjacencyList.edges (edge.currencyPair :: pairsVisited)) @ paths   
+                
+        paths 
 
-
-
-*)
+    processList from.vertex from.edges []

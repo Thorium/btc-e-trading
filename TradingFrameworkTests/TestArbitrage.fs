@@ -75,5 +75,19 @@ type TestCurrency() = class
 
     [<Test>]
     member self.getShortestPath() = 
-        Assert.Fail()
+        let getInfo = fun() -> PublicBtceApi.getInfoWithCustomDownloader mockDownloader
+
+        let getPriceQuotes = PublicBtceApi.getPriceQuotesWithCustomDownloader mockDownloader
+
+        let graph = createGraph getInfo getPriceQuotes
+
+        let paths = paths (adjacencyListForCurrency Currency.BTC graph) graph
+
+        for path in paths do
+            Console.WriteLine("")
+            for edge in path do
+                Console.Write(currencyPairToString(edge.currencyPair) + ", ")
+
+
+        Console.WriteLine(paths.Length.ToString())
 end

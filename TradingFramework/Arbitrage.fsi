@@ -28,10 +28,21 @@ type Vertex = {
     currency: Currency
 }
 
-type Edge = { 
+type EdgeDirection =
+    | Left = 0
+    | Right = 1
+
+type PairTicker = {
     transactionFee: Decimal;
-    ask: Decimal;
+    pair: Pair;
     sell: Decimal;
+    ask: Decimal
+}
+
+type Edge = { 
+    direction: EdgeDirection;
+    exchangeRate: Decimal;
+    pairTicker: PairTicker;
     currencyPair: Pair;
     vertices: Vertex * Vertex;
 }
@@ -44,3 +55,7 @@ type AdjacencyList = {
 type Graph = { adjacencyLists: AdjacencyList list }
 
 val public createGraph: (unit -> Info) -> (Pair list -> (Pair * Quote) list) -> Graph
+
+val public adjacencyListForCurrency: Currency -> Graph -> AdjacencyList
+
+val public paths: AdjacencyList -> Graph -> (Edge list) list
