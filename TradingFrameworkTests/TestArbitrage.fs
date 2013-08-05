@@ -74,7 +74,7 @@ type TestCurrency() = class
         Assert.True(edgesArePairs ltc [(Currency.LTC, Currency.USD);(Currency.LTC, Currency.BTC)])
 
     [<Test>]
-    member self.getShortestPath() = 
+    member self.getPaths() = 
         let getInfo = fun() -> PublicBtceApi.getInfoWithCustomDownloader mockDownloader
 
         let getPriceQuotes = PublicBtceApi.getPriceQuotesWithCustomDownloader mockDownloader
@@ -83,11 +83,30 @@ type TestCurrency() = class
 
         let paths = paths (adjacencyListForCurrency Currency.BTC graph) graph
 
+        // Debug
         for path in paths do
             Console.WriteLine("")
             for edge in path do
                 Console.Write(currencyPairToString(edge.currencyPair) + ", ")
+            Console.Write((pathProfit path).ToString())
 
+    [<Test>]
+    member self.showLiveData() = 
+        let graph = createGraph PublicBtceApi.getInfo PublicBtceApi.getPriceQuotes
 
-        Console.WriteLine(paths.Length.ToString())
+        let currencies: Currency array = Enum.GetValues(typedefof<Currency>) :?> Currency array
+
+        let currencies =
+            Async.Parallel [ for currency in currencies -> 
+                                async { return paths (adjacencyListForCurrency currency graph) graph } ]
+            |> Async.RunSynchronously
+
+        // Debug
+        for paths in currencies do
+            Console.WriteLine("\n")
+            for path in paths do
+                Console.WriteLine("")
+                for edge in path do
+                    Console.Write(currencyPairToString(edge.currencyPair) + ", ")
+                Console.Write((pathProfit path).ToString())
 end

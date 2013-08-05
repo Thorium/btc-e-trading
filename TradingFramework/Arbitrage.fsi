@@ -29,8 +29,8 @@ type Vertex = {
 }
 
 type EdgeDirection =
-    | Left = 0
-    | Right = 1
+    | Left
+    | Right
 
 type PairTicker = {
     transactionFee: Decimal;
@@ -54,8 +54,16 @@ type AdjacencyList = {
 
 type Graph = { adjacencyLists: AdjacencyList list }
 
+// Creates a directed graph of currencies. The edges represent an exchange from one currency to another and as such have a direction. 
+// Each edge will always be matched with an edge going the other way 
+// e.g. if you have 2 vertices, v1 and v2, and an edge e1 going from v1 to v2, 
+// then we can guarantee there will also be an edge e2 going from v2 to v1.
 val public createGraph: (unit -> Info) -> (Pair list -> (Pair * Quote) list) -> Graph
+
+val public pathProfit: Edge list -> Decimal
 
 val public adjacencyListForCurrency: Currency -> Graph -> AdjacencyList
 
+// Gets all possible cycles starting and ending with a given currency, while not moving between currency pairs more than once.
+// If the size of the graph grows we may want to switch to the Bellman-Ford algorithm.
 val public paths: AdjacencyList -> Graph -> (Edge list) list
