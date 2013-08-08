@@ -126,7 +126,7 @@ let adjacencyListForVertex (vertex: Vertex) (graph: Graph) : AdjacencyList =
 let adjacencyListForCurrency (currency: Currency) (graph: Graph) : AdjacencyList =
     List.find (fun x -> x.vertex.currency = currency) graph.adjacencyLists
 
-let paths (from: AdjacencyList) (graph: Graph) : (Edge list) list = 
+let paths (from: AdjacencyList) (graph: Graph) (limit: int) : (Edge list) list = 
     let finalVertex = from.vertex
 
     let rec processList (from: Vertex) (edges: Edge list) (pairsVisited: Pair list) (edgesVisited: Edge list) : (Edge list) list = 
@@ -143,7 +143,7 @@ let paths (from: AdjacencyList) (graph: Graph) : (Edge list) list =
 
                 if finalVertex = toVertex then
                     paths <- (edge :: edgesVisited) :: paths
-                else 
+                else if edgesVisited.Length + 1 < limit then
                     let pairsVisited = edge.currencyPair :: pairsVisited
                     let edgesVisited = edge :: edgesVisited
                     paths <- (processList adjacencyList.vertex adjacencyList.edges pairsVisited edgesVisited) @ paths

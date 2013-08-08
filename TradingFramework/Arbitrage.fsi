@@ -66,4 +66,4 @@ val public adjacencyListForCurrency: Currency -> Graph -> AdjacencyList
 
 // Gets all possible cycles starting and ending with a given currency, while not moving between currency pairs more than once.
 // If the size of the graph grows we may want to switch to the Bellman-Ford algorithm.
-val public paths: AdjacencyList -> Graph -> (Edge list) list
+val public paths: AdjacencyList -> Graph -> int -> (Edge list) list
