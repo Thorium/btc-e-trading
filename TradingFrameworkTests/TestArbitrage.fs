@@ -61,17 +61,49 @@ type TestCurrency() = class
         Assert.AreEqual(3, btc.edges.Length)
         Assert.True(edgesArePairs btc [(Currency.BTC, Currency.USD);(Currency.BTC, Currency.EUR);(Currency.LTC, Currency.BTC)])
 
+        (*
+            btc->usd=(1.0 / 95.351) - ((1.0 / 95.351) * (0.2 / 100))        usd->btc=95.7 - (95.7 * (0.2 / 100))
+            btc->eur=(1.0 / 75.30001) - ((1.0 / 75.30001) * (0.2 / 100))    eur->btc=75.71001 - (75.71001 * (0.2 / 100))
+            ltc->btc=(1.0 / 0.02732) - ((1.0 / 0.02732) * (0.2 / 100))      btc->ltc=0.02734 - (0.02734 * (0.2 / 100))
+            ltc->usd=(1.0 / 2.610012) - ((1.0 / 2.610012) * (0.2 / 100))    usd->ltc=2.62608 - (2.62608 * (0.2 / 100))
+            eur->usd=(1.0 / 1.25713) - ((1.0 / 1.25713) * (0.2 / 100))      usd->eur=1.2677 - (1.2677 * (0.2 / 100))
+        *)
+
+        // btc->usd
+        Assert.AreEqual((new Decimal(1) / new Decimal(95.351)) - ((new Decimal(1) / new Decimal(95.351)) * new Decimal(0.002)), btc.edges.Head.exchangeRate);
+        // btc->eur
+        Assert.AreEqual((new Decimal(1) / new Decimal(75.30001)) - ((new Decimal(1) / new Decimal(75.30001)) * new Decimal(0.002)), btc.edges.Tail.Head.exchangeRate);
+        // btc->ltc
+        Assert.AreEqual(new Decimal(0.02734) - (new Decimal(0.02734) * new Decimal(0.002)), btc.edges.Tail.Tail.Head.exchangeRate);
+
         let usd = getAdjacencyListForCurrency vertices Currency.USD
         Assert.AreEqual(3, usd.edges.Length)
         Assert.True(edgesArePairs usd [(Currency.BTC, Currency.USD);(Currency.LTC, Currency.USD);(Currency.EUR, Currency.USD)])
+
+        // usd->btc
+        Assert.AreEqual(95.7 - (95.7 * (0.2 / 100.0)), usd.edges.Head.exchangeRate);
+        // usd->ltc
+        Assert.AreEqual(2.62608 - (2.62608 * (0.2 / 100.0)), usd.edges.Tail.Head.exchangeRate);
+        // usd->eur
+        Assert.AreEqual(1.2677 - (1.2677 * (0.2 / 100.0)), usd.edges.Tail.Tail.Head.exchangeRate);
 
         let eur = getAdjacencyListForCurrency vertices Currency.EUR
         Assert.AreEqual(2, eur.edges.Length)
         Assert.True(edgesArePairs eur [(Currency.EUR, Currency.USD);(Currency.BTC, Currency.EUR)])
 
+        // eur->usd
+        Assert.AreEqual((1.0 / 1.25713) - ((1.0 / 1.25713) * (0.2 / 100.0)), eur.edges.Head.exchangeRate);
+        // eur->btc
+        Assert.AreEqual(75.71001 - (75.71001 * (0.2 / 100.0)), eur.edges.Tail.Head.exchangeRate);
+
         let ltc = getAdjacencyListForCurrency vertices Currency.LTC
         Assert.AreEqual(2, ltc.edges.Length)
         Assert.True(edgesArePairs ltc [(Currency.LTC, Currency.USD);(Currency.LTC, Currency.BTC)])
+
+        // ltc->usd
+        Assert.AreEqual((1.0 / 2.610012) - ((1.0 / 2.610012) * (0.2 / 100.0)), ltc.edges.Head.exchangeRate);
+        // ltc->btc
+        Assert.AreEqual((1.0 / 0.02732) - ((1.0 / 0.02732) * (0.2 / 100.0)), ltc.edges.Tail.Head.exchangeRate);
 
     [<Test>]
     member self.getPaths() = 
@@ -86,8 +118,9 @@ type TestCurrency() = class
         // Debug
         for path in paths do
             Console.WriteLine("")
+            let mutable i = new Decimal(1)
             for edge in path do
-                Console.Write(currencyPairToString(edge.currencyPair) + ", ")
+                Console.Write(currencyPairToString(edge.currencyPair) + " " + edge.exchangeRate.ToString() + ", ")
             Console.Write((pathProfit path).ToString())
 
     [<Test>]

@@ -57,9 +57,9 @@ type Graph = { adjacencyLists: AdjacencyList list }
 let getExchangeRate (fromCurrency: Currency) (info: PairTicker) : Decimal =
     match info.pair with
         | (left, right) when left = fromCurrency -> 
-            info.sell + (info.sell * (info.transactionFee / new Decimal(100)))
+            (new Decimal(1) / info.sell) - ((new Decimal(1) / info.sell) * (info.transactionFee / new Decimal(100)))
         | (left, right) when right = fromCurrency -> 
-            new Decimal(1) / (info.ask - (info.ask * (info.transactionFee / new Decimal(100))))
+            info.ask - (info.ask * (info.transactionFee / new Decimal(100)))
         | _ -> failwith ("From and to currencies did not match currency pair: " + currencyPairToString(info.pair))
 
 let createEdge (direction: EdgeDirection) (pair: Pair) (pairTicker: PairTicker) (vertices: Vertex list) : Edge =
@@ -69,7 +69,7 @@ let createEdge (direction: EdgeDirection) (pair: Pair) (pairTicker: PairTicker) 
     let (left, right) = pair
     {
         direction = direction;
-        exchangeRate = getExchangeRate (if direction = EdgeDirection.Left then right else left) pairTicker;
+        exchangeRate = getExchangeRate (if direction = EdgeDirection.Left then left else right) pairTicker;
         pairTicker = pairTicker;
         currencyPair = pair;
         vertices = (findVertexWithCurrency(left), findVertexWithCurrency(right))
@@ -109,9 +109,9 @@ let createGraph (getInfo: unit -> Info) (getPriceQuotes: Pair list -> (Pair * Qu
                                 vertex = vertex; 
                                 edges = [ for edge in edges do
                                             match edge.currencyPair with
-                                                | (x, y) when edge.direction = EdgeDirection.Left && y = vertex.currency 
+                                                | (x, y) when edge.direction = EdgeDirection.Left && x = vertex.currency 
                                                     -> yield edge
-                                                | (x, y) when edge.direction = EdgeDirection.Right && x = vertex.currency 
+                                                | (x, y) when edge.direction = EdgeDirection.Right && y = vertex.currency 
                                                     -> yield edge
                                                 | _ -> () ]
                             } ]

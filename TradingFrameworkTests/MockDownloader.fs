@@ -23,19 +23,19 @@ let apiv3MockInfo = @"{
     ""server_time"":1375428679,
     ""pairs"":{
         ""btc_usd"":{
-            ""decimal_places"":3,""min_price"":0.1,""max_price"":400,""min_amount"":0.01,""hidden"":0,""fee"":0.1
+            ""decimal_places"":3,""min_price"":0.1,""max_price"":400,""min_amount"":0.01,""hidden"":0,""fee"":0.2
         },
         ""btc_eur"":{
-            ""decimal_places"":5,""min_price"":0.1,""max_price"":400,""min_amount"":0.1,""hidden"":0,""fee"":0.1
+            ""decimal_places"":5,""min_price"":0.1,""max_price"":400,""min_amount"":0.1,""hidden"":0,""fee"":0.2
         },
         ""ltc_btc"":{
-            ""decimal_places"":5,""min_price"":0.0001,""max_price"":10,""min_amount"":0.1,""hidden"":0,""fee"":0.1
+            ""decimal_places"":5,""min_price"":0.0001,""max_price"":10,""min_amount"":0.1,""hidden"":0,""fee"":0.2
         },
         ""ltc_usd"":{
-            ""decimal_places"":6,""min_price"":0.0001,""max_price"":100,""min_amount"":0.1,""hidden"":0,""fee"":0.1
+            ""decimal_places"":6,""min_price"":0.0001,""max_price"":100,""min_amount"":0.1,""hidden"":0,""fee"":0.2
         },
         ""eur_usd"":{
-            ""decimal_places"":5,""min_price"":1,""max_price"":2,""min_amount"":0.1,""hidden"":0,""fee"":0.1
+            ""decimal_places"":5,""min_price"":1,""max_price"":2,""min_amount"":0.1,""hidden"":0,""fee"":0.2
         }
     }
 }"
