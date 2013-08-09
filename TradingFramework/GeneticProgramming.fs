@@ -19,3 +19,60 @@
 
 module GeneticProgramming
 
+open System
+
+type NodeData =
+    | Dog of int
+    | Cat of string
+
+type Node = {
+    children: Node list
+    data: NodeData
+}
+
+type EvaluationTree = {
+    root: Option<Node>
+}
+
+let populate = ignore
+
+let fitness (program: EvaluationTree) : int = 1
+
+let selectWithRandomNumberGenerator (randomNumberGenerator: unit -> double) (population: EvaluationTree list) : EvaluationTree list =
+    assert (population.Length > 1)
+
+    let fitness program = double(fitness program)
+
+    let productOfFitness = List.fold (fun product populate -> product * fitness(populate)) 1.0 population
+    
+    let populationWithProbability = List.map (fun populate -> (populate, fitness(populate) / productOfFitness)) population
+
+    // Descending order
+    let populationWithProbability = List.sortBy (fun (populate, probability) -> -probability) populationWithProbability
+     
+    let randomNumber = randomNumberGenerator()
+
+    assert (randomNumber >= 0.0 && randomNumber < 1.0)
+
+    let rec selectPopulate populationWithProbability accumulator =
+        match populationWithProbability with
+            | head :: tail when randomNumber < (match head with | (_, probability) -> probability) + accumulator ->  
+                let (populate, _) = head
+                populate
+            | head :: tail ->  
+                let (_, probability) = head
+                selectPopulate tail (probability + accumulator)
+            | [] -> 
+                failwith "Unreachable"
+
+    [selectPopulate populationWithProbability 0.0]
+
+let select (population: EvaluationTree list) : EvaluationTree list =
+    let randomNumberGenerator = new Random()
+    selectWithRandomNumberGenerator (fun () -> randomNumberGenerator.NextDouble()) population
+
+let mutate = ignore
+
+let combine = ignore
+
+let generateIslands = ignore
