@@ -22,8 +22,19 @@ module GeneticProgramming
 open System
 
 type NodeData =
-    | Dog of int
-    | Cat of string
+    | OverlapFunction of (unit -> int)
+    | TimePeriodConstant of Decimal
+    | DistanceFromOverlapBuy of Decimal
+    | DistanceFromOverlapSell of Decimal 
+    | Buy of Decimal
+    | Sell of Decimal
+(*
+    | CycleIndicatorFunction
+    | OverlapFunction
+    | MomentumFunction
+    | PatternRecognitionFunction
+    | TimePeriod
+*)
 
 type Node = {
     children: Node list

@@ -18,3 +18,7 @@
 *)
 
 module BackTesting
+
+open BtceApiFramework
+
+val public readHistoricTickerData: string -> seq<(Currency.Pair * PublicBtceApi.Quote) list option>

@@ -18,3 +18,27 @@
 *)
 
 module BackTesting
+
+open System.Net
+open System
+
+open BtceApiFramework
+
+let parseLine (line: string) =
+    let datetime = DateTime.Parse(line.Substring(0, 19))
+    let json = line.Substring(20)
+
+    if json.Length = 0 then
+        None
+    else
+        let randomPair = (Currency.Currency.BTC, Currency.Currency.USD)
+
+        let data = BtceApiFramework.PublicBtceApi.getPriceQuotesWithCustomDownloader (fun x -> json) [randomPair] 
+
+        Some(data)
+
+let readHistoricTickerData (file: string) = seq {
+    use sr = new System.IO.StreamReader(file)
+    while not sr.EndOfStream do
+        yield parseLine(sr.ReadLine())
+}

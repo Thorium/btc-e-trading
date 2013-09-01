@@ -26,6 +26,6 @@ type TestBacktesting() = class
 
     [<Test>]
     member self.testnothing() = 
-        Assert.Fail()
+        BackTesting.readHistoricTickerData "ticker.txt"
 
 end
