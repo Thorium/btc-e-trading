@@ -26,6 +26,12 @@ type TestBacktesting() = class
 
     [<Test>]
     member self.testnothing() = 
-        BackTesting.readHistoricTickerData "ticker.txt"
-
+        let v = BackTesting.readHistoricTickerData "ticker.txt"
+        for x in v do
+            match x with
+                | Some(value) -> 
+                    let (x, y) = value.Head
+                    System.Console.WriteLine(y.buy)
+                | None -> ()
+        ()
 end
