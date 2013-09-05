@@ -44,13 +44,12 @@ let diff (lhs: PublicBtceApi.Quote) (rhs: PublicBtceApi.Quote) (apply: Decimal -
     Creates a straight line from one point to the other
 *)
 let generateIntermediateValues (emptyPlaces: int) (precedingRecord: Record) (followingRecord: Record) : Record list =
-    let (x, precedingQuote) = precedingRecord
-    let (z, followingQuote) = followingRecord
+    let (_, precedingQuote) = precedingRecord
+    let (currencyPair, followingQuote) = followingRecord
 
-    
-    let quoteDifference = diff followingQuote precedingQuote (fun x y -> (x - y) / new Decimal(emptyPlaces) * 1)
-    
-    [(x, quoteDifference)]
+    [ for i in 1..emptyPlaces do
+        let valueCalculation lastValue firstValue = (lastValue - firstValue) / new Decimal(emptyPlaces) * new Decimal(i)
+        yield (currencyPair, diff followingQuote precedingQuote valueCalculation) ]
 
 let parseLine (line: string) =
     let datetime = DateTime.Parse(line.Substring(0, 19))
