@@ -21,4 +21,8 @@ module BackTesting
 
 open BtceApiFramework
 
-val public readHistoricTickerData: string -> seq<(Currency.Pair * PublicBtceApi.Quote) list option>
+type Record = (Currency.Pair * PublicBtceApi.Quote)
+
+val public generateIntermediateValues: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> Record list
+
+val public readHistoricTickerData: string -> seq<Record list>

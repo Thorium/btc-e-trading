@@ -19,19 +19,75 @@
 
 module TestBacktesting
 
+open System
+
 open NUnit.Framework
+
+open BtceApiFramework
+
+open BackTesting
 
 [<TestFixture>]
 type TestBacktesting() = class
 
     [<Test>]
+    member self.testGeneratingImmediateValues() = 
+        let precedingRecord: PublicBtceApi.Quote = {
+            high = new Decimal(10);
+            low = new Decimal(0);
+            average = new Decimal(-20);
+            tradingVolume = new Decimal(20);
+            tradingVolumeInCurrency = new Decimal(0);
+            lastTransactionPrice = new Decimal(0);
+            buy = new Decimal(50);
+            sell = new Decimal(10);
+            updated = (int64)0;
+        }
+
+        let followingRecord: PublicBtceApi.Quote = {
+            high = new Decimal(50);
+            low = new Decimal(0);
+            average = new Decimal(20);
+            tradingVolume = new Decimal(-20);
+            tradingVolumeInCurrency = new Decimal(0);
+            lastTransactionPrice = new Decimal(0);
+            buy = new Decimal(10);
+            sell = new Decimal(10);
+            updated = (int64)0;
+        }
+
+        let currency = (Currency.Currency.LTC, Currency.Currency.BTC)
+        let numberOfEmptyPlaces = 3
+        let itermediateRecords = generateIntermediateValues numberOfEmptyPlaces (currency, precedingRecord) (currency, followingRecord)
+        let itermediateQuotes = List.map (fun (_, quote) -> quote) itermediateRecords
+
+        Assert.AreEqual(3, itermediateQuotes.Length)
+
+        Assert.AreEqual(new Decimal(20), itermediateQuotes.Head.high)
+        Assert.AreEqual(new Decimal(30), itermediateQuotes.Tail.Head.high)
+        Assert.AreEqual(new Decimal(40), itermediateQuotes.Tail.Tail.Head.high)
+        
+        Assert.AreEqual(new Decimal(40), itermediateQuotes.Head.buy)
+        Assert.AreEqual(new Decimal(30), itermediateQuotes.Tail.Head.buy)
+        Assert.AreEqual(new Decimal(20), itermediateQuotes.Tail.Tail.Head.buy)
+        
+        Assert.AreEqual(new Decimal(10), itermediateQuotes.Head.sell)
+        Assert.AreEqual(new Decimal(10), itermediateQuotes.Tail.Head.sell)
+        Assert.AreEqual(new Decimal(10), itermediateQuotes.Tail.Tail.Head.sell)
+        
+        Assert.AreEqual(new Decimal(-10), itermediateQuotes.Head.average)
+        Assert.AreEqual(new Decimal(0), itermediateQuotes.Tail.Head.average)
+        Assert.AreEqual(new Decimal(10), itermediateQuotes.Tail.Tail.Head.average)
+        
+        Assert.AreEqual(new Decimal(10), itermediateQuotes.Head.tradingVolume)
+        Assert.AreEqual(new Decimal(0), itermediateQuotes.Tail.Head.tradingVolume)
+        Assert.AreEqual(new Decimal(-10), itermediateQuotes.Tail.Tail.Head.tradingVolume)
+
+    [<Test>]
     member self.testnothing() = 
-        let v = BackTesting.readHistoricTickerData "ticker.txt"
-        for x in v do
-            match x with
-                | Some(value) -> 
-                    let (x, y) = value.Head
-                    System.Console.WriteLine(y.buy)
-                | None -> ()
+        let values = BackTesting.readHistoricTickerData "ticker.txt"
+        for value in values do
+            let (x, y) = value.Head
+            System.Console.WriteLine(y.buy)
         ()
 end

@@ -26,16 +26,16 @@ open BtceApiFramework
 
 type Record = (Currency.Pair * PublicBtceApi.Quote)
 
-let diff (lhs: PublicBtceApi.Quote) (rhs: PublicBtceApi.Quote) (apply: Decimal -> Decimal -> Decimal) : PublicBtceApi.Quote =
+let operate (lhs: PublicBtceApi.Quote) (rhs: PublicBtceApi.Quote) (operation: Decimal -> Decimal -> Decimal) : PublicBtceApi.Quote =
     {
-        high = apply lhs.high rhs.high;
-        low = apply lhs.low rhs.low;
-        average = apply lhs.average rhs.average;
-        tradingVolume = apply lhs.tradingVolume rhs.tradingVolume;
-        tradingVolumeInCurrency = apply lhs.tradingVolumeInCurrency rhs.tradingVolumeInCurrency;
-        lastTransactionPrice = apply lhs.lastTransactionPrice rhs.lastTransactionPrice;
-        buy = apply lhs.buy rhs.buy;
-        sell = apply lhs.sell rhs.sell;
+        high = operation lhs.high rhs.high;
+        low = operation lhs.low rhs.low;
+        average = operation lhs.average rhs.average;
+        tradingVolume = operation lhs.tradingVolume rhs.tradingVolume;
+        tradingVolumeInCurrency = operation lhs.tradingVolumeInCurrency rhs.tradingVolumeInCurrency;
+        lastTransactionPrice = operation lhs.lastTransactionPrice rhs.lastTransactionPrice;
+        buy = operation lhs.buy rhs.buy;
+        sell = operation lhs.sell rhs.sell;
         updated = (int64)0;
     }
 
@@ -48,8 +48,17 @@ let generateIntermediateValues (emptyPlaces: int) (precedingRecord: Record) (fol
     let (currencyPair, followingQuote) = followingRecord
 
     [ for i in 1..emptyPlaces do
-        let valueCalculation lastValue firstValue = (lastValue - firstValue) / new Decimal(emptyPlaces) * new Decimal(i)
-        yield (currencyPair, diff followingQuote precedingQuote valueCalculation) ]
+        let operation lastValue firstValue = 
+            if firstValue < lastValue then
+                firstValue + ((lastValue - firstValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
+            else
+                firstValue - ((firstValue - lastValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
+
+        yield (currencyPair, operate followingQuote precedingQuote operation) ]
+
+let generateIntermediateValuesForLists (emptyPlaces: int) (precedingRecordList: Record list) (followingRecordList: Record list) : (Record list) list =
+    [ for (precedingRecord, followingRecord) in Seq.zip precedingRecordList followingRecordList do
+        yield generateIntermediateValues emptyPlaces precedingRecord followingRecord ]
 
 let parseLine (line: string) =
     let datetime = DateTime.Parse(line.Substring(0, 19))
@@ -64,8 +73,24 @@ let parseLine (line: string) =
 
         Some(data)
 
+let generateMissingData (streamReader: System.IO.StreamReader) previousRecord = seq {
+    let i = ref 1
+    while not streamReader.EndOfStream do
+        match parseLine(streamReader.ReadLine()) with
+            | None -> i.Value <- !i + 1
+            | Some(x) -> 
+                yield! generateIntermediateValuesForLists !i previousRecord x
+                yield x
+}
+
 let readHistoricTickerData (file: string) = seq {
-    use sr = new System.IO.StreamReader(file)
-    while not sr.EndOfStream do
-        yield parseLine(sr.ReadLine())
+    let (previousRecord: (Record list) option ref) = ref None
+    use streamReader = new System.IO.StreamReader(file)
+    while not streamReader.EndOfStream do
+        match parseLine(streamReader.ReadLine()) with
+            | None when (!previousRecord).IsSome -> yield! generateMissingData streamReader (!previousRecord).Value
+            | None -> ()
+            | Some(x) -> 
+                previousRecord.Value <- Some(x)
+                yield x
 }
