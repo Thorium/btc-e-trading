@@ -23,6 +23,6 @@ open BtceApiFramework
 
 type Record = (Currency.Pair * PublicBtceApi.Quote)
 
-val public generateIntermediateValues: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> Record list
+val public generateIntermediateValue: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> i:int -> Record
 
 val public readHistoricTickerData: readLine:(unit -> string option) -> apply:(Record list -> unit) -> unit

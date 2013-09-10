@@ -39,35 +39,22 @@ let operate (lhs: PublicBtceApi.Quote) (rhs: PublicBtceApi.Quote) (operation: De
         updated = (int64)0;
     }
 
-(*
-    Very rudimental algorithm to fill in missing data in the backtesting historic data.
-    Creates a straight line from one point to the other
-*)
-let generateIntermediateValues (emptyPlaces: int) (precedingRecord: Record) (followingRecord: Record) : Record list =
+let generateIntermediateValue (emptyPlaces: int) (precedingRecord: Record) (followingRecord: Record) (i: int) : Record =
     let (_, precedingQuote) = precedingRecord
     let (currencyPair, followingQuote) = followingRecord
 
-    [ for i in 1..emptyPlaces do
-        let operation lastValue firstValue = 
-            if firstValue < lastValue then
-                firstValue + ((lastValue - firstValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
-            else
-                firstValue - ((firstValue - lastValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
+    let operation lastValue firstValue = 
+        if firstValue < lastValue then
+            firstValue + ((lastValue - firstValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
+        else
+            firstValue - ((firstValue - lastValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
 
-        yield (currencyPair, operate followingQuote precedingQuote operation) ]
+    (currencyPair, operate followingQuote precedingQuote operation)
 
 let generateIntermediateValuesForLists (emptyPlaces: int) (precedingRecordList: Record list) (followingRecordList: Record list) : (Record list) list =
-    [ for (precedingRecord, followingRecord) in Seq.zip precedingRecordList followingRecordList do
-        let (_, precedingQuote) = precedingRecord
-        let (currencyPair, followingQuote) = followingRecord
-        yield [ for i in 1..emptyPlaces do
-                    let operation lastValue firstValue = 
-                        if firstValue < lastValue then
-                            firstValue + ((lastValue - firstValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
-                        else
-                            firstValue - ((firstValue - lastValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
-
-                    yield (currencyPair, operate followingQuote precedingQuote operation) ] ]
+    [ for i in 1..emptyPlaces do
+        yield [ for (precedingRecord, followingRecord) in Seq.zip precedingRecordList followingRecordList do
+                    yield generateIntermediateValue emptyPlaces precedingRecord followingRecord i ] ]
 
 type ReadLine = unit -> string option
 
