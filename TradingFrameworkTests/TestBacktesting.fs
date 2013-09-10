@@ -31,7 +31,7 @@ open BackTesting
 type TestBacktesting() = class
 
     [<Test>]
-    member self.testGeneratingImmediateValues() = 
+    member self.generateImmediateValues() = 
         let precedingRecord: PublicBtceApi.Quote = {
             high = new Decimal(10);
             low = new Decimal(0);
@@ -84,10 +84,54 @@ type TestBacktesting() = class
         Assert.AreEqual(new Decimal(-10), itermediateQuotes.Tail.Tail.Head.tradingVolume)
 
     [<Test>]
-    member self.testnothing() = 
-        let values = BackTesting.readHistoricTickerData "ticker.txt"
-        for value in values do
-            let (x, y) = value.Head
-            System.Console.WriteLine(y.buy)
-        ()
+    member self.readBacktestingData() = 
+        let tickerData = 
+            "2013-08-06 08:09:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.466,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:10:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.467,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:11:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.468,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n" +
+            "\n2013-08-06 08:13:02 db error" +
+            "\n2013-08-06 08:14:02 " +
+            "\n" +
+            "\n" +
+            "\n" +
+            "\n" +
+            "\n" +
+            "\n2013-08-06 08:20:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.469,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:21:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.470,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:22:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.471,\"sell\":96.465,\"updated\":1375790940}}"
+
+        let i = ref 0
+        let lines = tickerData.Split([|'\n'|])
+
+        let reader () =
+            if !i < lines.Length then
+                let j = !i
+                i.Value <- !i + 1
+                Some(lines.[j])
+            else
+                None
+
+        let values = new System.Collections.Generic.List<PublicBtceApi.Quote>()
+
+        BackTesting.readHistoricTickerData reader (fun x -> 
+            let (_, quote) = x.Head
+            values.Add(quote) |> ignore)
+
+        Assert.AreEqual(lines.Length, values.Count)
+
+        Assert.AreEqual(new Decimal(10), values.[0].buy)
+        Assert.AreEqual(new Decimal(10), values.[1].buy)
+        Assert.AreEqual(new Decimal(10), values.[2].buy)
+        Assert.AreEqual(new Decimal(10), values.[3].buy)
+        Assert.AreEqual(new Decimal(10), values.[4].buy)
+        Assert.AreEqual(new Decimal(10), values.[5].buy)
+        Assert.AreEqual(new Decimal(10), values.[6].buy)
+        Assert.AreEqual(new Decimal(10), values.[7].buy)
+        Assert.AreEqual(new Decimal(10), values.[8].buy)
+        Assert.AreEqual(new Decimal(10), values.[9].buy)
+        Assert.AreEqual(new Decimal(10), values.[10].buy)
+        Assert.AreEqual(new Decimal(10), values.[11].buy)
+        Assert.AreEqual(new Decimal(10), values.[12].buy)
+        Assert.AreEqual(new Decimal(10), values.[13].buy)
 end

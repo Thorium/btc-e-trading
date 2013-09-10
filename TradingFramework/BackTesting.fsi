@@ -25,4 +25,4 @@ type Record = (Currency.Pair * PublicBtceApi.Quote)
 
 val public generateIntermediateValues: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> Record list
 
-val public readHistoricTickerData: string -> seq<Record list>
+val public readHistoricTickerData: readLine:(unit -> string option) -> apply:(Record list -> unit) -> unit

@@ -58,39 +58,70 @@ let generateIntermediateValues (emptyPlaces: int) (precedingRecord: Record) (fol
 
 let generateIntermediateValuesForLists (emptyPlaces: int) (precedingRecordList: Record list) (followingRecordList: Record list) : (Record list) list =
     [ for (precedingRecord, followingRecord) in Seq.zip precedingRecordList followingRecordList do
-        yield generateIntermediateValues emptyPlaces precedingRecord followingRecord ]
+        let (_, precedingQuote) = precedingRecord
+        let (currencyPair, followingQuote) = followingRecord
+        yield [ for i in 1..emptyPlaces do
+                    let operation lastValue firstValue = 
+                        if firstValue < lastValue then
+                            firstValue + ((lastValue - firstValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
+                        else
+                            firstValue - ((firstValue - lastValue) / new Decimal(emptyPlaces + 1) * new Decimal(i))
+
+                    yield (currencyPair, operate followingQuote precedingQuote operation) ] ]
+
+type ReadLine = unit -> string option
 
 let parseLine (line: string) =
-    let datetime = DateTime.Parse(line.Substring(0, 19))
-    let json = line.Substring(20)
+    let lastDateTimeCharacterPosition = 19
+    let firstJsonCharacterPosition = lastDateTimeCharacterPosition + 1
 
-    if json.Length = 0 || not <| json.StartsWith("{") then
+    if line.Length < firstJsonCharacterPosition + 1 then
         None
     else
-        let randomPair = (Currency.Currency.BTC, Currency.Currency.USD)
+        let datetime = DateTime.Parse(line.Substring(0, lastDateTimeCharacterPosition))
+        let json = line.Substring(firstJsonCharacterPosition)
 
-        let data = BtceApiFramework.PublicBtceApi.getPriceQuotesWithCustomDownloader (fun x -> json) [randomPair] 
+        if json.Length = 0 || not <| json.StartsWith("{") then
+            None
+        else
+            let randomPair = (Currency.Currency.BTC, Currency.Currency.USD)
 
-        Some(data)
+            let data = BtceApiFramework.PublicBtceApi.getPriceQuotesWithCustomDownloader (fun x -> json) [randomPair] 
 
-let generateMissingData (streamReader: System.IO.StreamReader) previousRecord = seq {
-    let i = ref 1
-    while not streamReader.EndOfStream do
-        match parseLine(streamReader.ReadLine()) with
-            | None -> i.Value <- !i + 1
-            | Some(x) -> 
-                yield! generateIntermediateValuesForLists !i previousRecord x
-                yield x
-}
+            Some(data)
 
-let readHistoricTickerData (file: string) = seq {
-    let (previousRecord: (Record list) option ref) = ref None
-    use streamReader = new System.IO.StreamReader(file)
-    while not streamReader.EndOfStream do
-        match parseLine(streamReader.ReadLine()) with
-            | None when (!previousRecord).IsSome -> yield! generateMissingData streamReader (!previousRecord).Value
+let generateMissingData (readLine: ReadLine) previousRecord = 
+    let rec readLineWithMissingData (readLine: ReadLine) i =
+        match readLine() with
+            | None -> None
+            | Some(line) ->
+                match parseLine(line) with
+                    | None -> readLineWithMissingData readLine (i + 1)
+                    | Some(x) -> 
+                        Some(generateIntermediateValuesForLists i previousRecord x, x)            
+
+    readLineWithMissingData readLine 1
+    
+let readHistoricTickerData (readLine: ReadLine) (apply: Record list -> unit) =
+    let rec readLines (streamReader: ReadLine) (previousRecord: Record list option) = 
+        match readLine() with 
             | None -> ()
-            | Some(x) -> 
-                previousRecord.Value <- Some(x)
-                yield x
-}
+            | Some(line) -> 
+                match parseLine(line) with
+                    | None when previousRecord.IsSome -> 
+                        let missingData = generateMissingData streamReader previousRecord.Value
+                        if missingData.IsNone then
+                            readLines streamReader previousRecord
+                        else
+                            let (generatedMissingRecords, lastRecord) = missingData.Value
+                            for generatedMissingRecord in generatedMissingRecords do
+                                apply(generatedMissingRecord)
+                            apply(lastRecord)
+                            readLines streamReader (Some(lastRecord))
+                    | None -> 
+                        readLines streamReader None
+                    | Some(record) ->
+                        apply(record)
+                        readLines streamReader (Some(record))
+    
+    readLines readLine None

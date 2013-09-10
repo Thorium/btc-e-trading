@@ -46,7 +46,6 @@ let getValueFromPath (path: Edge list) : Decimal =
 
 [<TestFixture>]
 type TestCurrency() = class
-
     (*
         Exchange rate calculations for mock data:
 
@@ -135,7 +134,7 @@ type TestCurrency() = class
 
         let currencies =
             Async.Parallel [ for currency in currencies -> 
-                                async { return paths (adjacencyListForCurrency currency graph) graph 3 } ]
+                                async { return paths (adjacencyListForCurrency currency graph) graph 4 } ]
             |> Async.RunSynchronously
 
         // Debug
