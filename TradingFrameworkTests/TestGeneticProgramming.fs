@@ -21,11 +21,20 @@ module TestGeneticProgramming
 
 open NUnit.Framework
 
+open GeneticProgramming
+
 [<TestFixture>]
 type TestGeneticProgramming() = class
 
     [<Test>]
-    member self.testnothing() = 
-        Assert.Fail()
+    member self.testFlippingBitInInteger() = 
+        let x = flipBitInInteger ((uint32)5) 0
+        Assert.AreEqual((uint32)4, x)
+
+        let x = flipBitInInteger ((uint32)5) 2
+        Assert.AreEqual((uint32)1, x)
+
+        let x = flipBitInInteger ((uint32)8) 2
+        Assert.AreEqual((uint32)12, x)
 
 end

@@ -19,3 +19,4 @@
 
 module GeneticProgramming
 
+val public flipBitInInteger: uint32 -> bitPosition:int -> uint32

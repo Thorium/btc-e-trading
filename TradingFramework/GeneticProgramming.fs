@@ -82,6 +82,10 @@ let select (population: EvaluationTree list) : EvaluationTree list =
     let randomNumberGenerator = new Random()
     selectWithRandomNumberGenerator (fun () -> randomNumberGenerator.NextDouble()) population
 
+let flipBitInInteger (x: uint32) (bitPosition: int) = 
+    assert (bitPosition >= 0 && bitPosition < 32)
+    x ^^^ (uint32)(1 <<< bitPosition)
+    
 let mutate = ignore
 
 let combine = ignore
