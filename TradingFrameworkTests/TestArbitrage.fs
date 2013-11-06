@@ -25,7 +25,7 @@ open BtceApiFramework.PrivateBtceApi
 open BtceApiFramework.Currency
 open BtceApiFramework
 
-open Arbitrage
+open TradingFramework.Arbitrage
 open MockDownloader
 
 open System

@@ -17,14 +17,32 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-namespace TradingFramework
+namespace BtceApiFramework
 
-module BackTesting = 
+module Currency =
 
-    open BtceApiFramework
+    type Currency = 
+        | USD = 0 // US Dollar
+        | BTC = 1 // Bitcoin
+        | LTC = 2 // Litecoin
+        | NMC = 3 // Namecoin
+        | RUR = 4 // Russian Ruble
+        | EUR = 5 // Euro    
+        | NVC = 6 // Novacoin
+        | TRC = 7 // Terra
+        | PPC = 8 // PPCoin (Peer-to-Peer Coin)
+        | FTC = 9 // Feathercoin
+        | CNC = 10 // CNCoin (China coin)
+        | XPM = 11 // PrimeCoin
 
-    type Record = (Currency.Pair * PublicBtceApi.Quote)
+    type Pair = Currency * Currency
 
-    val public generateIntermediateValue: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> i:int -> Record
+    val public isValidCurrencyPair: Pair -> bool
 
-    val public readHistoricTickerData: readLine:(unit -> string option) -> action:(Record list -> unit) -> unit
+    val public getCurrency: string -> Currency
+
+    val public getCurrencyPair: string -> Pair
+
+    val public isValidStringPair: string -> bool
+
+    val public currencyPairToString: Pair -> string

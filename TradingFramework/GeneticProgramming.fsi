@@ -17,6 +17,47 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-module GeneticProgramming
+namespace TradingFramework
 
-val public flipBitInInteger: uint32 -> bitPosition:int -> uint32
+module GeneticProgramming =
+
+    type TreeNodeValue<'t> = { 
+        BranchNumber: int
+        LeafNumber: int
+        NumberOfBranches: int
+        NumberOfLeafs: int
+        Data: 't
+    }
+
+    /// Branch contains a tuple of: value, children
+    type TreeNode<'t, 'u> = 
+        | Leaf of TreeNodeValue<'u>
+        | Branch of TreeNodeValue<'t> * TreeNode<'t, 'u> list
+
+    /// An instance of this is a program
+    type EvaluationTree<'t, 'u> = { root: TreeNode<'t, 'u> }
+
+    /// <summary>
+    /// Fitness proportionate selection.
+    /// </summary>
+    val public selectWithRandomNumberGenerator: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> int) -> 'a
+
+    /// <summary>
+    /// Wrapper around selectWithRandomNumberGenerator where random number generator is supplied with System.Random's NextDouble method.
+    /// </summary>
+    val public select: population:'a list -> fitness:('a -> int) -> 'a
+
+    /// <summary>
+    /// Generates a program using the grow method.
+    /// </summary>
+    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    val public populateByGrowth: branchGenerator:(unit -> 'a) -> leafGenerator:(unit -> 'b) -> randomNumberGenerator:(int -> int) -> maxDepth:int -> maxChildren:int -> chanceOfLeaf:int -> EvaluationTree<'a, 'b>
+
+    /// <summary>
+    /// Combines two trees (programs) together at a random point. The root of the rhs tree replaces a node somewhere within the lhs tree.
+    /// </summary>
+    /// <param name="chanceOfLeafNode">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
+    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    /// <param name="mutate">This function is applied to all nodes in the tree, if you return a new node then the node passed to the function will be replaced in the combined tree with the new node.</param>
+    /// <returns>Combined tree, all the nodes in this tree are copies, so mutate the lhs or rhs trees will not mutate the combined tree.</returns>
+    val public combine: lhs:EvaluationTree<'a, 'b> -> rhs:EvaluationTree<'a, 'b> -> chanceOfLeafNode:int -> randomNumberGenerator:(int -> int) -> mutate:(TreeNode<'a, 'b> -> TreeNode<'a, 'b>) -> EvaluationTree<'a, 'b>

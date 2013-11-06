@@ -2,68 +2,57 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7429e955-e3a1-440c-99e1-54685a2cd736}</ProjectGuid>
+    <ProjectGuid>{945ce3da-731a-4e4a-bf0e-680b1e26afb5}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>btc_e_bot</RootNamespace>
-    <AssemblyName>TradingFramework</AssemblyName>
+    <RootNamespace>TaLib</RootNamespace>
+    <AssemblyName>TaLib</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>TradingFramework</Name>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <Name>TaLib</Name>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\TradingFramework.XML</DocumentationFile>
     <PlatformTarget>x86</PlatformTarget>
+    <DocumentationFile>bin\Debug\TaLib.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\btc_e_bot.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
+    <DocumentationFile>bin\Release\TaLib.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="Arbitrage.fsi" />
-    <Compile Include="Arbitrage.fs" />
-    <Compile Include="BackTesting.fsi" />
-    <Compile Include="BackTesting.fs" />
-    <Compile Include="GeneticProgramming.fsi" />
-    <Compile Include="GeneticProgramming.fs" />
-    <Compile Include="PatternRecognitionGP.fsi" />
+    <Compile Include="TaLib.fsi" />
+    <Compile Include="TaLib.fs" />
     <None Include="README.md" />
-    <Compile Include="PatternRecognitionGP.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="TA-Lib-Core">
       <HintPath>obj\TA-Lib-Core.dll</HintPath>
     </Reference>
-    <ProjectReference Include="..\BtceFramework\BtceFramework.fsproj">
-      <Name>BtceFramework</Name>
-      <Project>{480853fb-47b3-4a0e-89c4-9b87c6ab8e6a}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TaLib\TaLib.fsproj">
-      <Name>TaLib</Name>
-      <Project>{945ce3da-731a-4e4a-bf0e-680b1e26afb5}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

@@ -17,53 +17,59 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-module Arbitrage
+namespace TradingFramework
 
-open System
+module Arbitrage =
 
-open BtceApiFramework.Currency
-open BtceApiFramework.PublicBtceApi
+    open System
 
-type Vertex = { 
-    currency: Currency
-}
+    open BtceApiFramework.Currency
+    open BtceApiFramework.PublicBtceApi
 
-type EdgeDirection =
-    | Left
-    | Right
+    type Vertex = { 
+        currency: Currency
+    }
 
-type PairTicker = {
-    transactionFee: Decimal;
-    pair: Pair;
-    sell: Decimal;
-    ask: Decimal
-}
+    type EdgeDirection =
+        | Left
+        | Right
 
-type Edge = { 
-    direction: EdgeDirection;
-    exchangeRate: Decimal;
-    pairTicker: PairTicker;
-    currencyPair: Pair;
-    vertices: Vertex * Vertex;
-}
+    type PairTicker = {
+        transactionFee: Decimal;
+        pair: Pair;
+        sell: Decimal;
+        ask: Decimal
+    }
 
-type AdjacencyList = {
-    vertex: Vertex;
-    edges: Edge list
-}
+    type Edge = { 
+        direction: EdgeDirection;
+        exchangeRate: Decimal;
+        pairTicker: PairTicker;
+        currencyPair: Pair;
+        vertices: Vertex * Vertex;
+    }
 
-type Graph = { adjacencyLists: AdjacencyList list }
+    type AdjacencyList = {
+        vertex: Vertex;
+        edges: Edge list
+    }
 
-// Creates a directed graph of currencies. The edges represent an exchange from one currency to another and as such have a direction. 
-// Each edge will always be matched with an edge going the other way 
-// e.g. if you have 2 vertices, v1 and v2, and an edge e1 going from v1 to v2, 
-// then we can guarantee there will also be an edge e2 going from v2 to v1.
-val public createGraph: (unit -> Info) -> (Pair list -> (Pair * Quote) list) -> Graph
+    type Graph = { adjacencyLists: AdjacencyList list }
 
-val public pathProfit: Edge list -> Decimal
+    /// <summary>
+    /// Creates a directed graph of currencies. The edges represent an exchange from one currency to another and as such have a direction. 
+    /// Each edge will always be matched with an edge going the other way 
+    /// e.g. if you have 2 vertices, v1 and v2, and an edge e1 going from v1 to v2, 
+    /// then we can guarantee there will also be an edge e2 going from v2 to v1.
+    /// </summary>
+    val public createGraph: getInfo:(unit -> Info) -> getPriceQuotes:(Pair list -> (Pair * Quote) list) -> Graph
 
-val public adjacencyListForCurrency: Currency -> Graph -> AdjacencyList
+    val public pathProfit: path:Edge list -> Decimal
 
-// Gets all possible cycles starting and ending with a given currency, while not moving between currency pairs more than once.
-// If the size of the graph grows we may want to switch to the Bellman-Ford algorithm.
-val public paths: AdjacencyList -> Graph -> int -> (Edge list) list
+    val public adjacencyListForCurrency: currency:Currency -> graph:Graph -> AdjacencyList
+
+    /// <summary>
+    /// Gets all possible cycles starting and ending with a given currency, while not moving between currency pairs more than once.
+    /// If the size of the graph grows we may want to switch to the Bellman-Ford algorithm.
+    /// </summary>
+    val public paths: from:AdjacencyList -> graph:Graph -> limit:int -> (Edge list) list

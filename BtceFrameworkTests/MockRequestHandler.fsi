@@ -17,14 +17,6 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-namespace TradingFramework
+module MockRequestHandler
 
-module BackTesting = 
-
-    open BtceApiFramework
-
-    type Record = (Currency.Pair * PublicBtceApi.Quote)
-
-    val public generateIntermediateValue: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> i:int -> Record
-
-    val public readHistoricTickerData: readLine:(unit -> string option) -> action:(Record list -> unit) -> unit
+val public mockRequestHandler: string -> string -> string -> (string * string) list -> string

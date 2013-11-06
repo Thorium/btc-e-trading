@@ -25,7 +25,7 @@ open NUnit.Framework
 
 open BtceApiFramework
 
-open BackTesting
+open TradingFramework.BackTesting
 
 [<TestFixture>]
 type TestBacktesting() = class
@@ -84,9 +84,9 @@ type TestBacktesting() = class
     [<Test>]
     member self.readBacktestingData() = 
         let tickerData = 
-            "2013-08-06 08:09:02 {\"btc_usd\":{\"high\":-10,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":97.5,\"sell\":96.465,\"updated\":1375790940}}" +
-            "\n2013-08-06 08:10:02 {\"btc_usd\":{\"high\":-9.5,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":97,\"sell\":96.465,\"updated\":1375790940}}" +
-            "\n2013-08-06 08:11:02 {\"btc_usd\":{\"high\":-9,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.5,\"sell\":96.465,\"updated\":1375790940}}" +
+            "2013-08-06 08:09:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":97.5,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:10:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":97,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:11:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":96.5,\"sell\":96.465,\"updated\":1375790940}}" +
             "\n" +
             "\n2013-08-06 08:13:02 db error" +
             "\n2013-08-06 08:14:02 " +
@@ -95,9 +95,9 @@ type TestBacktesting() = class
             "\n" +
             "\n" +
             "\n" +
-            "\n2013-08-06 08:20:02 {\"btc_usd\":{\"high\":-4.5,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":92,\"sell\":96.465,\"updated\":1375790940}}" +
-            "\n2013-08-06 08:21:02 {\"btc_usd\":{\"high\":-4,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":91.5,\"sell\":96.465,\"updated\":1375790940}}" +
-            "\n2013-08-06 08:22:02 {\"btc_usd\":{\"high\":-3.5,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":91,\"sell\":96.465,\"updated\":1375790940}}"
+            "\n2013-08-06 08:20:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":92,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:21:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":91.5,\"sell\":96.465,\"updated\":1375790940}}" +
+            "\n2013-08-06 08:22:02 {\"btc_usd\":{\"high\":96.81,\"low\":94.857,\"avg\":95.8335,\"vol\":215902.82718,\"vol_cur\":2247.48188,\"last\":96.465,\"buy\":91,\"sell\":96.465,\"updated\":1375790940}}"
 
         let i = ref 0
         let lines = tickerData.Split([|'\n'|])
@@ -112,7 +112,7 @@ type TestBacktesting() = class
 
         let values = new System.Collections.Generic.List<PublicBtceApi.Quote>()
 
-        BackTesting.readHistoricTickerData reader (fun x -> 
+        readHistoricTickerData reader (fun x -> 
             let (_, quote) = x.Head
             values.Add(quote) |> ignore)
 
@@ -132,19 +132,4 @@ type TestBacktesting() = class
         Assert.AreEqual(new Decimal(92), values.[11].buy)
         Assert.AreEqual(new Decimal(91.5), values.[12].buy)
         Assert.AreEqual(new Decimal(91), values.[13].buy)
-
-        Assert.AreEqual(new Decimal(-10), values.[0].high)
-        Assert.AreEqual(new Decimal(-9.5), values.[1].high)
-        Assert.AreEqual(new Decimal(-9), values.[2].high)
-        Assert.AreEqual(new Decimal(-8.5), values.[3].high)
-        Assert.AreEqual(new Decimal(-8), values.[4].high)
-        Assert.AreEqual(new Decimal(-7.5), values.[5].high)
-        Assert.AreEqual(new Decimal(-7), values.[6].high)
-        Assert.AreEqual(new Decimal(-6.5), values.[7].high)
-        Assert.AreEqual(new Decimal(-6), values.[8].high)
-        Assert.AreEqual(new Decimal(-5.5), values.[9].high)
-        Assert.AreEqual(new Decimal(-5), values.[10].high)
-        Assert.AreEqual(new Decimal(-4.5), values.[11].high)
-        Assert.AreEqual(new Decimal(-4), values.[12].high)
-        Assert.AreEqual(new Decimal(-3.5), values.[13].high)
 end

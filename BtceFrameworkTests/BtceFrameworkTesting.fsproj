@@ -5,23 +5,24 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{7429e955-e3a1-440c-99e1-54685a2cd736}</ProjectGuid>
+    <ProjectGuid>{1060bd6b-04e3-459f-9c08-d4dd60bd5d44}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>btc_e_bot</RootNamespace>
-    <AssemblyName>TradingFramework</AssemblyName>
+    <RootNamespace>TradingFrameworkTesting</RootNamespace>
+    <AssemblyName>BtceApiFrameworkTesting</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>TradingFramework</Name>
+    <Name>BtceFrameworkTesting</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\TradingFramework.XML</DocumentationFile>
-    <PlatformTarget>x86</PlatformTarget>
+    <DocumentationFile>bin\Debug\BtceApiFrameworkTesting.XML</DocumentationFile>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -30,38 +31,32 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\btc_e_bot.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\TradingFrameworkTesting.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="Arbitrage.fsi" />
-    <Compile Include="Arbitrage.fs" />
-    <Compile Include="BackTesting.fsi" />
-    <Compile Include="BackTesting.fs" />
-    <Compile Include="GeneticProgramming.fsi" />
-    <Compile Include="GeneticProgramming.fs" />
-    <Compile Include="PatternRecognitionGP.fsi" />
+    <Compile Include="MockDownloader.fsi" />
+    <Compile Include="MockDownloader.fs" />
+    <Compile Include="MockRequestHandler.fsi" />
+    <Compile Include="MockRequestHandler.fs" />
+    <Compile Include="TestPrivateApi.fs" />
+    <Compile Include="TestPublicApi.fs" />
+    <Compile Include="TestCurrency.fs" />
     <None Include="README.md" />
-    <Compile Include="PatternRecognitionGP.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
+    <Reference Include="nunit.framework">
+      <HintPath>C:\Users\matthewm\Documents\Visual Studio 2010\Projects\Trading\TradingFrameworkTesting\obj\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="TA-Lib-Core">
-      <HintPath>obj\TA-Lib-Core.dll</HintPath>
-    </Reference>
     <ProjectReference Include="..\BtceFramework\BtceFramework.fsproj">
       <Name>BtceFramework</Name>
       <Project>{480853fb-47b3-4a0e-89c4-9b87c6ab8e6a}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TaLib\TaLib.fsproj">
-      <Name>TaLib</Name>
-      <Project>{945ce3da-731a-4e4a-bf0e-680b1e26afb5}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
