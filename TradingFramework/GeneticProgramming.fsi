@@ -60,4 +60,18 @@ module GeneticProgramming =
     /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
     /// <param name="mutate">This function is applied to all nodes in the tree, if you return a new node then the node passed to the function will be replaced in the combined tree with the new node.</param>
     /// <returns>Combined tree, all the nodes in this tree are copies, so mutate the lhs or rhs trees will not mutate the combined tree.</returns>
-    val public combine: lhs:EvaluationTree<'a, 'b> -> rhs:EvaluationTree<'a, 'b> -> chanceOfLeafNode:int -> randomNumberGenerator:(int -> int) -> mutate:(TreeNode<'a, 'b> -> TreeNode<'a, 'b>) -> EvaluationTree<'a, 'b>
+    val public combine: lhsNode:TreeNode<'a,'b> -> lhsNodeToCombineOn:TreeNode<'a,'b> -> rhsNode:TreeNode<'a,'b> -> mutate:(TreeNode<'a,'b> -> TreeNode<'a,'b>) -> EvaluationTree<'a, 'b>
+
+    /// <summary>
+    /// Finds a random node within a tree.
+    /// </summary>
+    /// <param name="chanceOfLeafNode">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
+    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    val public selectNode: chanceOfLeafNode:int -> randomNumberGenerator:(int -> int) -> tree:EvaluationTree<'a, 'b> -> TreeNode<'a,'b> option
+
+    /// <summary>
+    /// Cut and splice crossover of two trees lhs and rhs.
+    /// </summary>
+    /// <param name="selectNode">Function that's expected to return a node to perform the crossover on when given a tree.</param>
+    /// <param name="mutate">This function is applied to all nodes in the trees, if you return a new node then the node passed to the function will be replaced in the crossed over trees with the new node.</param>
+    val public crossover: lhs:EvaluationTree<'a, 'b> -> rhs:EvaluationTree<'a, 'b> -> selectNode:(EvaluationTree<'a, 'b> -> TreeNode<'a,'b> option) -> mutate:(TreeNode<'a,'b> -> TreeNode<'a,'b>) -> EvaluationTree<'a, 'b> * EvaluationTree<'a, 'b>

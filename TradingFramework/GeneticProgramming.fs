@@ -61,13 +61,13 @@ module GeneticProgramming =
 
         let rec selectPopulate populationWithProbability accumulator =
             match populationWithProbability with
-                | (program, probability) :: tail ->  
-                    if randomNumber < probability + accumulator then
-                        program
-                    else
-                        selectPopulate tail (probability + accumulator)
-                | [] -> 
-                    failwith "Unreachable"
+            | (program, probability) :: tail ->  
+                if randomNumber < probability + accumulator then
+                    program
+                else
+                    selectPopulate tail (probability + accumulator)
+            | [] -> 
+                failwith "Unreachable"
 
         selectPopulate populationWithProbability 0.0
 
@@ -90,23 +90,23 @@ module GeneticProgramming =
         generateChild numberOfChildren []
 
     let createNode createBranchFunction createLeafFunction branchesToTheLeft leavesToTheLeft = function
-        | Some(children) -> 
-            let branchesInChildren = (List.sumBy (fun x -> match x with | Branch(x, _) -> x.NumberOfBranches | _ -> 0) children)
-            Branch({
-                    BranchNumber = branchesToTheLeft + branchesInChildren + 1
-                    LeafNumber = 0
-                    NumberOfBranches = branchesInChildren + 1
-                    NumberOfLeafs = List.sumBy (fun x -> match x with | Branch(x, _) -> x.NumberOfLeafs | Leaf(_) -> 1) children
-                    Data = createBranchFunction()
-            }, children)
-        | None ->
-            Leaf({
-                    BranchNumber = 0
-                    LeafNumber = leavesToTheLeft + 1
-                    NumberOfBranches = 0
-                    NumberOfLeafs = 1
-                    Data = createLeafFunction()
-            })
+    | Some(children) -> 
+        let branchesInChildren = (List.sumBy (fun x -> match x with | Branch(x, _) -> x.NumberOfBranches | _ -> 0) children)
+        Branch({
+                BranchNumber = branchesToTheLeft + branchesInChildren + 1
+                LeafNumber = 0
+                NumberOfBranches = branchesInChildren + 1
+                NumberOfLeafs = List.sumBy (fun x -> match x with | Branch(x, _) -> x.NumberOfLeafs | Leaf(_) -> 1) children
+                Data = createBranchFunction()
+        }, children)
+    | None ->
+        Leaf({
+                BranchNumber = 0
+                LeafNumber = leavesToTheLeft + 1
+                NumberOfBranches = 0
+                NumberOfLeafs = 1
+                Data = createLeafFunction()
+        })
 
     let populateByGrowth branchGenerator leafGenerator randomNumberGenerator maxDepth maxChildren chanceOfLeaf =
         assert(maxDepth > 0 && maxChildren > 0 && chanceOfLeaf > 0)
@@ -132,45 +132,41 @@ module GeneticProgramming =
             NumberOfLeafs: int
         }
 
-    let extractNodeValue = function
-        | Leaf(value) -> 
-            {
-                BranchNumber = value.BranchNumber
-                LeafNumber = value.LeafNumber
-                NumberOfBranches = value.NumberOfBranches
-                NumberOfLeafs = value.NumberOfLeafs
-            }
-        | Branch(value, _) -> 
-            {
-                BranchNumber = value.BranchNumber
-                LeafNumber = value.LeafNumber
-                NumberOfBranches = value.NumberOfBranches
-                NumberOfLeafs = value.NumberOfLeafs
-            }
+    let extractNodeValuePosition (value: TreeNodeValue<'a>) = 
+        {
+            BranchNumber = value.BranchNumber
+            LeafNumber = value.LeafNumber
+            NumberOfBranches = value.NumberOfBranches
+            NumberOfLeafs = value.NumberOfLeafs
+        }
+
+    let extractNodePosition = function
+    | Leaf(value) -> extractNodeValuePosition value
+    | Branch(value, _) -> extractNodeValuePosition value
 
     let rec copyChildren provideOwnCopy leavesToTheLeft branchesToTheLeft mutate copyNode = function
-        | child :: tail ->
-            let child = copyNode provideOwnCopy leavesToTheLeft branchesToTheLeft child mutate
+    | child :: tail ->
+        let child = copyNode provideOwnCopy leavesToTheLeft branchesToTheLeft child mutate
 
-            let childValue = extractNodeValue child
-            let leavesToTheLeft = leavesToTheLeft + childValue.NumberOfLeafs
-            let branchesToTheLeft = branchesToTheLeft + childValue.NumberOfBranches
+        let childPosition = extractNodePosition child
+        let leavesToTheLeft = leavesToTheLeft + childPosition.NumberOfLeafs
+        let branchesToTheLeft = branchesToTheLeft + childPosition.NumberOfBranches
 
-            child :: copyChildren provideOwnCopy leavesToTheLeft branchesToTheLeft mutate copyNode tail
-        | [] -> []
+        child :: copyChildren provideOwnCopy leavesToTheLeft branchesToTheLeft mutate copyNode tail
+    | [] -> []
 
     let rec copyNode copyLeaf copyBranch provideOwnCopy leavesToTheLeft branchesToTheLeft node mutate =
         match node with
-            | Leaf(node) -> 
-                match provideOwnCopy node.LeafNumber node.BranchNumber leavesToTheLeft branchesToTheLeft true with
-                    | Some(copy) -> copy
-                    | None ->
-                        mutate <| copyLeaf leavesToTheLeft node
-            | Branch(node, children) -> 
-                match provideOwnCopy node.LeafNumber node.BranchNumber leavesToTheLeft branchesToTheLeft false with
-                    | Some(copy) -> copy
-                    | None ->
-                        mutate <| copyBranch leavesToTheLeft branchesToTheLeft node children provideOwnCopy mutate
+        | Leaf(node) -> 
+            match provideOwnCopy (extractNodeValuePosition node) leavesToTheLeft branchesToTheLeft true with
+                | Some(copy) -> copy
+                | None ->
+                    mutate <| copyLeaf leavesToTheLeft node
+        | Branch(node, children) -> 
+            match provideOwnCopy (extractNodeValuePosition node) leavesToTheLeft branchesToTheLeft false with
+                | Some(copy) -> copy
+                | None ->
+                    mutate <| copyBranch leavesToTheLeft branchesToTheLeft node children provideOwnCopy mutate
 
     let copyLeaf leavesToTheLeft leafNode =
         let leaf = {
@@ -198,27 +194,82 @@ module GeneticProgramming =
     /// <summary>
     /// Combines two trees (programs) together at a random point. The root of the rhs tree replaces a node somewhere within the lhs tree.
     /// </summary>
-    /// <param name="chanceOfLeafNode">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
-    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
     /// <param name="mutate">This function is applied to all nodes in the tree, if you return a new node then the node passed to the function will be replaced in the combined tree with the new node.</param>
     /// <returns>Combined tree, all the nodes in this tree are copies, so mutate the lhs or rhs trees will not mutate the combined tree.</returns>
-    let combine lhs rhs chanceOfLeafNode randomNumberGenerator mutate =
-        let combineOnLeaf = randomNumberGenerator chanceOfLeafNode = 1
+    let combine (lhsNode: TreeNode<'a,'b>) (lhsNodeToCombineOn: TreeNode<'a,'b>) rhsNode mutate =
+        let f = extractNodePosition lhsNodeToCombineOn
 
-        let root = extractNodeValue lhs.root
-
-        let nodeToSelect = 
-            if combineOnLeaf then
-                randomNumberGenerator root.NumberOfLeafs
-            else
-                randomNumberGenerator root.NumberOfBranches
-
-        let nodeToSelect = nodeToSelect + 1 // range of 1..n rather than 0..n - 1
-
-        let provideOwnCopy leaf branch leafsToTheLeft branchesToTheLeft isLeaf = 
-            if (combineOnLeaf && isLeaf && nodeToSelect = leaf) || (not combineOnLeaf && not isLeaf && nodeToSelect = branch) then
-                Some(copyNode copyLeaf copyBranch (fun _ _ _ _ _ -> None) leafsToTheLeft branchesToTheLeft rhs.root mutate)
+        let provideOwnCopy node leafsToTheLeft branchesToTheLeft isLeaf = 
+            if f = node then
+                Some(copyNode copyLeaf copyBranch (fun _ _ _ _ -> None) leafsToTheLeft branchesToTheLeft rhsNode mutate)
             else
                 None
 
-        { root = copyNode copyLeaf copyBranch provideOwnCopy 0 0 lhs.root mutate }
+        { root = copyNode copyLeaf copyBranch provideOwnCopy 0 0 lhsNode mutate }
+
+    type NodeLocation =
+    | BranchPosition of int
+    | LeafPosition of int
+
+    /// <summary>
+    /// Finds the node at the given location by walking down (depth first) from the given root node.
+    /// </summary>
+    let walkToNode position root =
+        let fail () =
+            let nodeType = 
+                match position with
+                | BranchPosition(_) -> "Branch"
+                | LeafPosition(_) -> "Leaf"
+            failwith (nodeType + " position" + position.ToString() + " did not exist in the tree.")
+
+        let rec walkChildren walk = function
+        | child :: children -> 
+            match walk child with
+            | Some(x) -> Some(x)
+            | None -> walkChildren walk children
+        | [] -> fail ()
+
+        let rec walk node = 
+            match node with
+            | Branch(value, children) -> 
+                match position with
+                | BranchPosition(position) when position = value.BranchNumber -> Some(node)
+                | _ -> walkChildren walk children
+            | Leaf(value) -> 
+                match position with
+                | LeafPosition(position) when position = value.LeafNumber -> Some(node)
+                | _ -> fail ()
+            
+        walk root
+
+    /// <summary>
+    /// Finds a random node within a tree.
+    /// </summary>
+    /// <param name="chanceOfLeafNode">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
+    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    let selectNode chanceOfLeafNode randomNumberGenerator tree =
+        let combineOnLeaf = randomNumberGenerator chanceOfLeafNode = 1
+
+        let rootPosition = extractNodePosition tree.root
+
+        // range of 1..n rather than 0..n - 1
+        let nodeLocation = 
+            if combineOnLeaf then
+                LeafPosition((randomNumberGenerator rootPosition.NumberOfLeafs) + 1)
+            else
+                BranchPosition((randomNumberGenerator rootPosition.NumberOfBranches) + 1)
+
+        walkToNode nodeLocation tree.root
+
+    /// <summary>
+    /// Cut and splice crossover of two trees lhs and rhs.
+    /// </summary>
+    /// <param name="selectNode">Function that's expected to return a node to perform the crossover on when given a tree.</param>
+    /// <param name="mutate">This function is applied to all nodes in the trees, if you return a new node then the node passed to the function will be replaced in the crossed over trees with the new node.</param>
+    let crossover lhs rhs selectNode mutate =
+        match selectNode lhs, selectNode rhs with
+        | (Some(lhsNode), Some(rhsNode)) -> 
+            let left = combine lhs.root lhsNode rhsNode mutate
+            let right = combine rhs.root rhsNode lhsNode mutate
+            left, right
+        | _ -> failwith "Failed to find a point to crossover on both trees."

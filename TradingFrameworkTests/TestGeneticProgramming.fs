@@ -118,12 +118,13 @@ type TestGeneticProgramming() = class
         let leaf2 = Leaf({BranchNumber=0;LeafNumber=5;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let leaf3 = Leaf({BranchNumber=0;LeafNumber=6;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=3;Data=1}, [leaf1;leaf2;leaf3])
+        let nodeToCombineOn = leaf3
 
         let leaf1 = Leaf({BranchNumber=0;LeafNumber=7;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let leaf2 = Leaf({BranchNumber=0;LeafNumber=8;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let leaf3 = Leaf({BranchNumber=0;LeafNumber=9;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch3 = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=3;Data=1}, [leaf1;leaf2;leaf3])
-
+        
         let lhs = Branch({BranchNumber=4;LeafNumber=0;NumberOfBranches=4;NumberOfLeafs=9;Data=1}, [branch1;branch2;branch3])
 
         let lhs = { root = lhs }
@@ -147,7 +148,7 @@ type TestGeneticProgramming() = class
 
         let rhs = { root = rhs }
 
-        let combinedTree = combine lhs rhs 999 (fun x -> if x = 999 then 1 else 5) (fun x -> x)
+        let combinedTree = combine lhs.root nodeToCombineOn rhs.root (fun x -> x)
 
         let leaf1 = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
@@ -201,6 +202,7 @@ type TestGeneticProgramming() = class
         let leaf2 = Leaf({BranchNumber=0;LeafNumber=8;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let leaf3 = Leaf({BranchNumber=0;LeafNumber=9;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch3 = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=3;Data=1}, [leaf1;leaf2;leaf3])
+        let nodeToCombineOn = branch3
 
         let lhs = Branch({BranchNumber=4;LeafNumber=0;NumberOfBranches=4;NumberOfLeafs=9;Data=1}, [branch1;branch2;branch3])
 
@@ -225,7 +227,7 @@ type TestGeneticProgramming() = class
 
         let rhs = { root = rhs }
 
-        let combinedTree = combine lhs rhs 999 (fun x -> 2) (fun x -> x)
+        let combinedTree = combine lhs.root nodeToCombineOn rhs.root (fun x -> x)
 
         let leaf1 = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
@@ -259,7 +261,7 @@ type TestGeneticProgramming() = class
         let resultingTree = { root = resultingTree }
 
         Assert.AreEqual(resultingTree, combinedTree)
-
+        (*
     [<Test>]
     member self.combineBranchRootToTree() = 
         let leafNode = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
@@ -283,11 +285,12 @@ type TestGeneticProgramming() = class
         let combinedTree = combine tree tree 999 (fun x -> x) (fun x -> x)
 
         Assert.Fail()
-
+        *)
     [<Test>]
     member self.combineOnFirstBranch() = 
         let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+        let nodeToCombineOn = branch1
 
         let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
@@ -304,7 +307,7 @@ type TestGeneticProgramming() = class
         let rhs = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=2}, [branch1;branch2])
         let rhs = { root = rhs }
 
-        let combinedTree = combine lhs rhs 999 (fun _ -> 0) (fun x -> x)
+        let combinedTree = combine lhs.root nodeToCombineOn rhs.root (fun x -> x)
 
         let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=2})
         let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=2}, [leaf])
@@ -328,6 +331,7 @@ type TestGeneticProgramming() = class
     [<Test>]
     member self.combineOnFirstLeaf() = 
         let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let nodeToCombineOn = leaf;
         let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
 
         let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
@@ -345,7 +349,7 @@ type TestGeneticProgramming() = class
         let rhs = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=2}, [branch1;branch2])
         let rhs = { root = rhs }
 
-        let combinedTree = combine lhs rhs 999 (fun x -> if x = 999 then 1 else 0) (fun x -> x)
+        let combinedTree = combine lhs.root nodeToCombineOn rhs.root (fun x -> x)
 
         let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=2})
         let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=2}, [leaf])
@@ -369,6 +373,7 @@ type TestGeneticProgramming() = class
     member self.combineAndMutate() = 
         let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+        let nodeToCombineOn = branch1
 
         let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
         let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
@@ -406,7 +411,7 @@ type TestGeneticProgramming() = class
                     }, c))
 
         // Combine on first branch
-        let combinedTree = combine lhs rhs 999 (fun _ -> 0) mutate
+        let combinedTree = combine lhs.root nodeToCombineOn rhs.root mutate
 
         let leaf1 = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=100})
         let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=100})
@@ -431,6 +436,57 @@ type TestGeneticProgramming() = class
         printTree resultingTree (fun x -> x.ToString())
 
         Assert.AreEqual(resultingTree, combinedTree)
+
+    [<Test>]
+    member self.crossover() = 
+        let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+        let lhsNodeToCombineOn = branch1
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+
+        let lhs = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=1}, [branch1;branch2])
+        let lhs = { root = lhs }
+
+        let leaf1 = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=2;Data=10}, [leaf1;leaf2])
+        let rhsNodeToCombineOn = branch1
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=3;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=10}, [leaf])
+
+        let rhs = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=3;Data=10}, [branch1;branch2])
+        let rhs = { root = rhs }
+
+        let (leftTree, rightTree) = crossover lhs rhs (fun x -> 
+            if x = lhs then Some(lhsNodeToCombineOn) else Some(rhsNodeToCombineOn)) (fun x -> x)
+
+        // Left tree
+        let leaf1 = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=2;Data=10}, [leaf1;leaf2])
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=3;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+
+        let lhs = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=3;Data=1}, [branch1;branch2])
+        let lhs = { root = lhs }
+
+        Assert.AreEqual(lhs, leftTree)
+
+        // Right tree
+        let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=10}, [leaf])
+
+        let rhs = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=10}, [branch1;branch2])
+        let rhs = { root = rhs }
+
+        Assert.AreEqual(rhs, rightTree)
 
     [<Test>]
     member self.select() = 
