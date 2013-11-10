@@ -489,6 +489,78 @@ type TestGeneticProgramming() = class
         Assert.AreEqual(rhs, rightTree)
 
     [<Test>]
+    member self.selectFirstLeafNode() = 
+        let (leaf1: TreeNode<int, int>) = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf1])
+
+        let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=10}, [leaf2])
+
+        let root = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=10}, [branch1;branch2])
+        let tree = { root = root }
+
+        let selectedNode = selectNode 999 (fun x -> if x = 999 then 1 else 0) tree
+
+        let print = function
+        | Some(node) -> 
+            match node with
+            | Leaf(node) -> node.BranchNumber.ToString() + " " + node.LeafNumber.ToString() + " " + node.Data.ToString() + " " + node.NumberOfLeafs.ToString() + " " + node.NumberOfBranches.ToString()
+            | _ -> ""
+        | _ -> ""
+
+        System.Console.WriteLine(print selectedNode)
+        System.Console.WriteLine(print <| Some(leaf1))
+
+        Assert.AreEqual(Some(leaf1), selectedNode)
+
+    [<Test>]
+    member self.selectFirstBranchNode() = 
+        let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=10}, [leaf])
+
+        let root = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=10}, [branch1;branch2])
+        let tree = { root = root }
+
+        let selectedNode = selectNode 999 (fun x -> 0) tree
+
+        Assert.AreEqual(Some(branch1), selectedNode)
+
+    [<Test>]
+    member self.selectNoNode() = 
+        let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=10}, [leaf])
+
+        let root = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=10}, [branch1;branch2])
+        let tree = { root = root }
+
+        // Branch
+        Assert.Throws((fun _ -> (selectNode 999 (fun x -> 3) tree) |> ignore)) |> ignore
+
+        // Leaf
+        Assert.Throws((fun _ -> (selectNode 999 (fun x -> if x = 999 then 1 else 2) tree) |> ignore)) |> ignore
+
+    [<Test>]
+    member self.selectRootNode() = 
+        let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leaf])
+
+        let leaf = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=10}, [leaf])
+
+        let root = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=3;NumberOfLeafs=2;Data=10}, [branch1;branch2])
+        let tree = { root = root }
+
+        let selectedNode = selectNode 999 (fun x -> 2) tree
+
+        Assert.AreEqual(Some(root), selectedNode)
+
+    [<Test>]
     member self.select() = 
         let getFitness (fitnessValues: 'a []) (selectionValues: int list) value = 
             let i = List.findIndex (fun v -> v = value) selectionValues
