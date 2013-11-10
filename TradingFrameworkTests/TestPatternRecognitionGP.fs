@@ -55,17 +55,23 @@ type TestPatternRecognitionGeneticProgramming() = class
 
     [<Test>]
     member self.mutateValue() =
-        let result = mutateValue (fun x -> if x = 2 then 0 else 2) 92 5
+        let result = mutateValue (fun x -> if x = 2 then 0 else 2) 92 5 100 -100
         Assert.AreEqual(94, result)
 
-        let result = mutateValue (fun x -> if x = 2 then 0 else x) 97 5
+        let result = mutateValue (fun x -> if x = 2 then 0 else x) 97 5 100 -100
         Assert.AreEqual(100, result)
 
-        let result = mutateValue (fun x -> if x = 2 then 1 else 2) -92 5
+        let result = mutateValue (fun x -> if x = 2 then 1 else 2) -92 5 100 -100
         Assert.AreEqual(-94, result)
 
-        let result = mutateValue (fun x -> if x = 2 then 1 else x) -97 5
+        let result = mutateValue (fun x -> if x = 2 then 1 else x) -97 5 100 -100
         Assert.AreEqual(-100, result)
+
+        let result = mutateValue (fun x -> if x = 2 then 1 else 2) 3 5 100 0
+        Assert.AreEqual(1, result)
+
+        let result = mutateValue (fun x -> if x = 2 then 1 else x) 3 5 100 0
+        Assert.AreEqual(0, result)
 
     [<Test>]
     member self.mutateFunctionArguments() =
