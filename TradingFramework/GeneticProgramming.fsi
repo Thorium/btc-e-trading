@@ -34,23 +34,35 @@ module GeneticProgramming =
         | Leaf of TreeNodeValue<'u>
         | Branch of TreeNodeValue<'t> * TreeNode<'t, 'u> list
 
-    /// An instance of this is a program
+    /// An instance of this type is a program
     type EvaluationTree<'t, 'u> = { root: TreeNode<'t, 'u> }
 
     /// <summary>
     /// Fitness proportionate selection.
     /// </summary>
+    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0.0..0.1</param>
+    /// <param name="population">Population to select a program from.</param>
+    /// <param name="fitness">Fitness function, applied to each program in the population, expected to return an int, the higher the returned value is the more likely it is to be selected.</param>
     val public selectWithRandomNumberGenerator: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> int) -> 'a
 
     /// <summary>
     /// Wrapper around selectWithRandomNumberGenerator where random number generator is supplied with System.Random's NextDouble method.
     /// </summary>
+    /// <param name="population">Population to select a program from.</param>
+    /// <param name="fitness">Fitness function, applied to each program in the population, expected to return an int, the higher the returned value is the more likely it is to be selected.</param>
     val public select: population:'a list -> fitness:('a -> int) -> 'a
 
+    val public populateByGrowthApply: branchGenerator:(unit -> 'a) -> leafGenerator:(unit -> 'b) -> generateIsLeaf:(int -> int -> int -> bool) -> generateNumberOfChildren:(int -> int -> int -> int) -> EvaluationTree<'a, 'b>
+        
     /// <summary>
     /// Generates a program using the grow method.
     /// </summary>
+    /// <param name="branchGenerator">Function that creates and returns the value for a branch node.</param>
+    /// <param name="leafGenerator">Function that creates and returns the value for a leaf node.</param>
     /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    /// <param name="maxDepth">Maximum depth of the tree (level of the lowest possible child).</param>
+    /// <param name="maxChildren">Maximum number of children a branch node may be given.</param>
+    /// <param name="chanceOfLeaf">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
     val public populateByGrowth: branchGenerator:(unit -> 'a) -> leafGenerator:(unit -> 'b) -> randomNumberGenerator:(int -> int) -> maxDepth:int -> maxChildren:int -> chanceOfLeaf:int -> EvaluationTree<'a, 'b>
 
     /// <summary>
@@ -67,11 +79,12 @@ module GeneticProgramming =
     /// </summary>
     /// <param name="chanceOfLeafNode">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
     /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    /// <param name="tree">Tree to select the node from.</param>
     val public selectNode: chanceOfLeafNode:int -> randomNumberGenerator:(int -> int) -> tree:EvaluationTree<'a, 'b> -> TreeNode<'a,'b> option
 
     /// <summary>
     /// Cut and splice crossover of two trees lhs and rhs.
     /// </summary>
-    /// <param name="selectNode">Function that's expected to return a node to perform the crossover on when given a tree.</param>
+    /// <param name="selectNode">Function that's expected to return a node to perform the crossover on when given a tree (will be called once for each tree).</param>
     /// <param name="mutate">This function is applied to all nodes in the trees, if you return a new node then the node passed to the function will be replaced in the crossed over trees with the new node.</param>
     val public crossover: lhs:EvaluationTree<'a, 'b> -> rhs:EvaluationTree<'a, 'b> -> selectNode:(EvaluationTree<'a, 'b> -> TreeNode<'a,'b> option) -> mutate:(TreeNode<'a,'b> -> TreeNode<'a,'b>) -> EvaluationTree<'a, 'b> * EvaluationTree<'a, 'b>

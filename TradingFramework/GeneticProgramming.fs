@@ -108,21 +108,39 @@ module GeneticProgramming =
                 Data = createLeafFunction()
         })
 
-    let populateByGrowth branchGenerator leafGenerator randomNumberGenerator maxDepth maxChildren chanceOfLeaf =
-        assert(maxDepth > 0 && maxChildren > 0 && chanceOfLeaf > 0)
-
+    let populateByGrowthApply branchGenerator leafGenerator generateIsLeaf generateNumberOfChildren =
         let rec grow depth branchesToTheLeft leavesToTheLeft =
             let createNode = createNode branchGenerator leafGenerator branchesToTheLeft leavesToTheLeft
 
-            if depth = maxDepth || randomNumberGenerator chanceOfLeaf = 0 then
+            if generateIsLeaf depth branchesToTheLeft leavesToTheLeft then
                 createNode None
             else
-                let numberOfChildren = (randomNumberGenerator maxChildren) + 1
+                let numberOfChildren = generateNumberOfChildren depth branchesToTheLeft leavesToTheLeft
                 let children = generateChildren grow numberOfChildren (depth + 1) branchesToTheLeft leavesToTheLeft
 
                 createNode <| Some(children)
 
         { root = grow 0 0 0 }
+
+    /// <summary>
+    /// Generates a program using the grow method.
+    /// </summary>
+    /// <param name="branchGenerator">Function that creates and returns the value for a branch node.</param>
+    /// <param name="leafGenerator">Function that creates and returns the value for a leaf node.</param>
+    /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0..argument-1</param>
+    /// <param name="maxDepth">Maximum depth of the tree (level of the lowest possible child).</param>
+    /// <param name="maxChildren">Maximum number of children a branch node may be given.</param>
+    /// <param name="chanceOfLeaf">1 in chanceOfLeafNode chance of the trees being combined on a leaf node. e.g. If you want a chance of 1 in 10 then you'd pass 10.</param>
+    let populateByGrowth branchGenerator leafGenerator randomNumberGenerator maxDepth maxChildren chanceOfLeaf =
+        assert(maxDepth > 0 && maxChildren > 0 && chanceOfLeaf > 0)
+
+        let generateIsLeaf depth _ _ =
+            depth = maxDepth || randomNumberGenerator chanceOfLeaf = 0
+
+        let generateNumberOfChildren _ _ _ =
+            (randomNumberGenerator maxChildren) + 1
+        
+        populateByGrowthApply branchGenerator leafGenerator generateIsLeaf generateNumberOfChildren
 
     type NodePosition =
         {

@@ -57,55 +57,45 @@ let printTree tree printData =
 
 [<TestFixture>]
 type TestGeneticProgramming() = class
-(*
-    [<Test>]
-    member self.debugPrintGrow() = 
-        let rng = new System.Random()
-        let rngFunc = (fun x -> rng.Next(x))
-
-        let f = PatternRecognitionGP.growPatternRecogniserTree rngFunc 6 5 10
-        printTree f (fun _ -> "")
-        ()
-
-    [<Test>]
-    member self.debugPrintCombine() = 
-        let rng = new System.Random()
-        let rngFunc = (fun x -> rng.Next(x))
-
-        System.Console.WriteLine("\nTREE 1\n")
-        let f = PatternRecognitionGP.growPatternRecogniserTree rngFunc 10 2 100
-        printTree f
-
-        System.Console.WriteLine("\nTREE 2\n")
-        let y = PatternRecognitionGP.growPatternRecogniserTree rngFunc 10 2 100
-        printTree y
-
-        System.Console.WriteLine("\nCOMBINED TREE\n")
-        printTree (GeneticProgramming.combine f y 10 rngFunc (fun x -> x))
-        *)
     [<Test>]
     member self.grow() = 
+        let maxDepth = 4
+
+        let generateIsLeaf depth _ _ = depth = maxDepth
+
+        let generateNumberOfChildren _ _ _ = 3
 
         let i = ref 0
 
-        let array = [| 0..100 |]
+        let array = [| 0..20 |]
 
         let generator = (fun _ -> 
+            let r = array.[!i]
             incr i
-            array.[!i])
+            r)
+        
+        let tree = populateByGrowthApply generator generator generateIsLeaf generateNumberOfChildren
 
-        let maxDepth, maxChildren, chanceOfLeaf = 5, 3, 1
+        let leaf1 = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=0})
+        let leaf2 = Leaf({BranchNumber=0;LeafNumber=2;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
+        let leaf3 = Leaf({BranchNumber=0;LeafNumber=3;NumberOfBranches=0;NumberOfLeafs=1;Data=2})
+        let branch1 = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=3;Data=3}, [leaf1;leaf2;leaf3])
 
-        let randomNumberGenerator = fun x -> 
-            if x = maxChildren then 0
-            else if x = chanceOfLeaf then 0
-            else failwith "Unexpected value given to random number generator."
+        let leaf1 = Leaf({BranchNumber=0;LeafNumber=4;NumberOfBranches=0;NumberOfLeafs=1;Data=4})
+        let leaf2 = Leaf({BranchNumber=0;LeafNumber=5;NumberOfBranches=0;NumberOfLeafs=1;Data=5})
+        let leaf3 = Leaf({BranchNumber=0;LeafNumber=6;NumberOfBranches=0;NumberOfLeafs=1;Data=6})
+        let branch2 = Branch({BranchNumber=2;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=3;Data=7}, [leaf1;leaf2;leaf3])
 
-        let evaluationTree = populateByGrowth generator generator randomNumberGenerator maxDepth maxChildren chanceOfLeaf
+        let leaf1 = Leaf({BranchNumber=0;LeafNumber=7;NumberOfBranches=0;NumberOfLeafs=1;Data=8})
+        let leaf2 = Leaf({BranchNumber=0;LeafNumber=8;NumberOfBranches=0;NumberOfLeafs=1;Data=9})
+        let leaf3 = Leaf({BranchNumber=0;LeafNumber=9;NumberOfBranches=0;NumberOfLeafs=1;Data=10})
+        let branch3 = Branch({BranchNumber=3;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=3;Data=11}, [leaf1;leaf2;leaf3])
+        
+        let root = Branch({BranchNumber=4;LeafNumber=0;NumberOfBranches=4;NumberOfLeafs=9;Data=12}, [branch1;branch2;branch3])
 
+        let expectedTree = { root = root }
 
-
-        Assert.Fail()
+        Assert.AreEqual(expectedTree, tree)
 
     [<Test>]
     member self.combineOnLeaf() = 
@@ -261,31 +251,7 @@ type TestGeneticProgramming() = class
         let resultingTree = { root = resultingTree }
 
         Assert.AreEqual(resultingTree, combinedTree)
-        (*
-    [<Test>]
-    member self.combineBranchRootToTree() = 
-        let leafNode = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
 
-        let rootNode = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leafNode])
-
-        let tree = { root = rootNode }
-
-        let combinedTree = combine tree tree 999 (fun x -> x) (fun x -> x)
-
-        Assert.Fail()
-
-    [<Test>]
-    member self.combineLeafRootToTree() = 
-        let leafNode = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
-
-        let rootNode = Branch({BranchNumber=1;LeafNumber=0;NumberOfBranches=1;NumberOfLeafs=1;Data=1}, [leafNode])
-
-        let tree = { root = rootNode }
-
-        let combinedTree = combine tree tree 999 (fun x -> x) (fun x -> x)
-
-        Assert.Fail()
-        *)
     [<Test>]
     member self.combineOnFirstBranch() = 
         let leaf = Leaf({BranchNumber=0;LeafNumber=1;NumberOfBranches=0;NumberOfLeafs=1;Data=1})
@@ -500,16 +466,6 @@ type TestGeneticProgramming() = class
         let tree = { root = root }
 
         let selectedNode = selectNode 999 (fun x -> if x = 999 then 1 else 0) tree
-
-        let print = function
-        | Some(node) -> 
-            match node with
-            | Leaf(node) -> node.BranchNumber.ToString() + " " + node.LeafNumber.ToString() + " " + node.Data.ToString() + " " + node.NumberOfLeafs.ToString() + " " + node.NumberOfBranches.ToString()
-            | _ -> ""
-        | _ -> ""
-
-        System.Console.WriteLine(print selectedNode)
-        System.Console.WriteLine(print <| Some(leaf1))
 
         Assert.AreEqual(Some(leaf1), selectedNode)
 
