@@ -170,16 +170,36 @@ module PatternRecognitionGP =
         let leafGenerator = (fun _ -> generateRandomAction randomNumberGenerator)
         populateByGrowth branchGenerator leafGenerator randomNumberGenerator
 
-    let mutateValue randomNumberGenerator value = 
-        let randomNumber = (randomNumberGenerator 32) + 1
-        assert (randomNumber > 0 && randomNumber <= 32)
-        value ^^^ int(1.0 ** float(randomNumber))
+    type MutateValueOperator =
+    | Plus
+    | Minus
+
+    /// <summary>
+    /// Moves randomly either up or down by a random number between 0 and diff (inclusive) and kept given the range of minValue..maxValue (inclusive).
+    /// </summary>
+    let mutateValue randomNumberGenerator value diff maxValue minValue = 
+        let operators = [|Plus;Minus|]
+
+        let operator = operators.[randomNumberGenerator operators.Length]
+
+        let (diff: int) = match operator with
+                            | Plus when value + diff > maxValue -> maxValue - value
+                            | Minus when value - diff < minValue -> minValue - value
+                            | _ -> diff
+
+        let diff = System.Math.Abs(diff) 
+
+        let diff = randomNumberGenerator diff
+
+        match operator with
+        | Plus -> value + diff
+        | Minus -> value - diff
 
     /// <summary>
     /// Generates a random function for branch nodes.
     /// </summary>
     let mutateFunctionArguments (functionArguments: FunctionArguments) randomNumberGenerator =
-        let value = mutateValue randomNumberGenerator functionArguments.value
+        let value = mutateValue randomNumberGenerator functionArguments.value 5 100 -100
         assert (value >= -100 && value <= 100)
         {
             patternFunc = randomPatternRecogniser randomNumberGenerator

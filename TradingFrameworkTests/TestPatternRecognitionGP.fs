@@ -54,6 +54,20 @@ type TestPatternRecognitionGeneticProgramming() = class
         Assert.Fail()
 
     [<Test>]
+    member self.mutateValue() =
+        let result = mutateValue (fun x -> if x = 2 then 0 else 2) 92 5
+        Assert.AreEqual(94, result)
+
+        let result = mutateValue (fun x -> if x = 2 then 0 else x) 97 5
+        Assert.AreEqual(100, result)
+
+        let result = mutateValue (fun x -> if x = 2 then 1 else 2) -92 5
+        Assert.AreEqual(-94, result)
+
+        let result = mutateValue (fun x -> if x = 2 then 1 else x) -97 5
+        Assert.AreEqual(-100, result)
+
+    [<Test>]
     member self.mutateFunctionArguments() =
         Assert.Fail()
 
