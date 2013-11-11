@@ -233,7 +233,7 @@ module PatternRecognitionGP =
         readData reader (fun (x: Record list) i values -> 
             let (_, bitcoinQuote) = x.Head
 
-            let buy = toFloat bitcoinQuote.buy
+            let buy = float(bitcoinQuote.buy)
 
             if i = interval then
                 match values with
@@ -303,14 +303,20 @@ module PatternRecognitionGP =
 
         let rec evaluateEachRecord i actions =
             if i >= 0 then
-                let action = evaluateTree program (values.high.[0..i], values.low.[0..i], values.opening.[0..i], values.closing.[0..i]), decimal(values.closing.[i])
+                let action = evaluateTree program {
+                                    high=values.high.[0..i]
+                                    low = values.low.[0..i]
+                                    opening = values.opening.[0..i]
+                                    closing = values.closing.[0..i]
+                                }, decimal(values.closing.[i])
+
                 evaluateEachRecord (i - 1) (action :: actions)
             else
                 actions
 
         evaluateEachRecord (values.high.Length - 1) []
     
-    let fitness program readData (filename: string) =
+    let fitness readData (filename: string) program =
         use sr = new System.IO.StreamReader(filename)
         let reader () =
             if not sr.EndOfStream then
@@ -324,6 +330,9 @@ module PatternRecognitionGP =
 
         let actions = evaluateProgramAgainstIntervalData program values
 
-        let result = evaluateActions actions (new System.Decimal(0))
+        let result = float(evaluateActions actions (decimal(0)))
 
-        1
+        if result < 0.0 then
+            decimal(-System.Math.Log(System.Math.Abs(result)))
+        else
+            decimal(System.Math.Log(result))

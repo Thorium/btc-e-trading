@@ -45,31 +45,31 @@ module GeneticProgramming =
 
         let fitness program = 
             let fitness = fitness program
-            assert(fitness > 0)
-            double(fitness)
+            assert(fitness > decimal(0))
+            fitness
 
         let sumOfFitness = List.sumBy (fun program -> fitness(program)) population
-    
+        
         let populationWithProbability = List.map (fun program -> (program, fitness(program) / sumOfFitness)) population
 
         // Descending order
         let populationWithProbability = List.sortBy (fun (_, probability) -> probability) populationWithProbability
-    
+        
         let randomNumber = randomNumberGenerator()
-
+        
         assert (randomNumber >= 0.0 && randomNumber < 1.0)
 
         let rec selectPopulate populationWithProbability accumulator =
             match populationWithProbability with
             | (program, probability) :: tail ->  
-                if randomNumber < probability + accumulator then
+                if decimal(randomNumber) < probability + accumulator then
                     program
                 else
                     selectPopulate tail (probability + accumulator)
             | [] -> 
                 failwith "Unreachable"
 
-        selectPopulate populationWithProbability 0.0
+        selectPopulate populationWithProbability (decimal(0))
 
     let select population fitness =
         let randomNumberGenerator = new Random()

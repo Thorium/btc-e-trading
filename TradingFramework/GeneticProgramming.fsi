@@ -43,14 +43,14 @@ module GeneticProgramming =
     /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0.0..0.1</param>
     /// <param name="population">Population to select a program from.</param>
     /// <param name="fitness">Fitness function, applied to each program in the population, expected to return an int, the higher the returned value is the more likely it is to be selected.</param>
-    val public selectWithRandomNumberGenerator: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> int) -> 'a
+    val public selectWithRandomNumberGenerator: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> decimal) -> 'a
 
     /// <summary>
     /// Wrapper around selectWithRandomNumberGenerator where random number generator is supplied with System.Random's NextDouble method.
     /// </summary>
     /// <param name="population">Population to select a program from.</param>
     /// <param name="fitness">Fitness function, applied to each program in the population, expected to return an int, the higher the returned value is the more likely it is to be selected.</param>
-    val public select: population:'a list -> fitness:('a -> int) -> 'a
+    val public select: population:'a list -> fitness:('a -> decimal) -> 'a
 
     val public populateByGrowthApply: branchGenerator:(unit -> 'a) -> leafGenerator:(unit -> 'b) -> generateIsLeaf:(int -> int -> int -> bool) -> generateNumberOfChildren:(int -> int -> int -> int) -> EvaluationTree<'a, 'b>
         

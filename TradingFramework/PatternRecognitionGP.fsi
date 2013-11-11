@@ -90,3 +90,5 @@ module PatternRecognitionGP =
     val public readIntervalData: reader:'a -> readData:('a -> (Record list -> int -> OpenHighLowCloseOptional -> OpenHighLowCloseOptional * int) -> unit) -> interval:int -> OpenHighLowClose
 
     val public growPatternRecogniserTree: randomNumberGenerator:(int -> int) -> (int -> int -> int -> EvaluationTree<Func, Action>)
+
+    val public fitness: readData:((unit -> string option) -> (Record list -> int -> OpenHighLowCloseOptional -> OpenHighLowCloseOptional * int) -> unit) -> filename:string -> EvaluationTree<Func, Action> -> decimal
