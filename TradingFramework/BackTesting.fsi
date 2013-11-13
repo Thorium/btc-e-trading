@@ -27,4 +27,4 @@ module BackTesting =
 
     val public generateIntermediateValue: emptyPlaces:int -> precedingRecord:Record -> followingRecord:Record -> i:int -> Record
 
-    val public readHistoricTickerData: readLine:(unit -> string option) -> action:(Record list -> unit) -> unit
+    val public readHistoricTickerData: readLine:(unit -> string option) -> seq<Record list>

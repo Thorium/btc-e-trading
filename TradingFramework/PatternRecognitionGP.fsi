@@ -87,8 +87,8 @@ module PatternRecognitionGP =
     /// </summary>
     /// <param name="interval">How many backtesting records make up a "day". 
     /// e.g. if the value 15 will generate 1 high low closing data for each 15 btc records</param>
-    val public readIntervalData: reader:'a -> readData:('a -> (Record list -> int -> OpenHighLowCloseOptional -> OpenHighLowCloseOptional * int) -> unit) -> interval:int -> OpenHighLowClose
+    val public readIntervalData: reader:'a -> readData:('a -> seq<Record list>) -> interval:int -> OpenHighLowClose
 
     val public growPatternRecogniserTree: randomNumberGenerator:(int -> int) -> (int -> int -> int -> EvaluationTree<Func, Action>)
 
-    val public fitness: readData:((unit -> string option) -> (Record list -> int -> OpenHighLowCloseOptional -> OpenHighLowCloseOptional * int) -> unit) -> filename:string -> EvaluationTree<Func, Action> -> decimal
+    val public fitness: readData:((unit -> string option) -> seq<Record list>) -> filename:string -> EvaluationTree<Func, Action> -> decimal

@@ -112,9 +112,9 @@ type TestBacktesting() = class
 
         let values = new System.Collections.Generic.List<PublicBtceApi.Quote>()
 
-        readHistoricTickerData reader (fun x -> 
+        Seq.iter (fun (x: Record list) -> 
             let (_, quote) = x.Head
-            values.Add(quote) |> ignore)
+            values.Add(quote) |> ignore) (readHistoricTickerData reader) 
 
         Assert.AreEqual(lines.Length, values.Count)
 

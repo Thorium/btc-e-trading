@@ -91,8 +91,8 @@ module BackTesting =
 
         readLineWithMissingData readLine 1
     
-    let readHistoricTickerData (readLine: ReadLine) (action: Record list -> unit) =
-        let rec readLines (streamReader: ReadLine) (previousRecord: Record list option) = 
+    let readHistoricTickerData (readLine: unit -> string option) =
+        let rec readLines (streamReader: ReadLine) (previousRecord: Record list option) = seq {
             match readLine() with 
                 | None -> ()
                 | Some(line) -> 
@@ -100,17 +100,18 @@ module BackTesting =
                         | None when previousRecord.IsSome -> 
                             let missingData = generateMissingData streamReader previousRecord.Value
                             if missingData.IsNone then
-                                readLines streamReader previousRecord
+                                yield! readLines streamReader previousRecord
                             else
                                 let (generatedMissingRecords, lastRecord) = missingData.Value
                                 for generatedMissingRecord in generatedMissingRecords do
-                                    action(generatedMissingRecord)
-                                action(lastRecord)
-                                readLines streamReader <| Some(lastRecord)
+                                    yield generatedMissingRecord
+                                yield lastRecord
+                                yield! readLines streamReader <| Some(lastRecord)
                         | None -> 
-                            readLines streamReader None
+                            yield! readLines streamReader None
                         | Some(record) ->
-                            action(record)
-                            readLines streamReader (Some(record))
+                            yield record
+                            yield! readLines streamReader (Some(record))
+        }
     
         readLines readLine None

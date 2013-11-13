@@ -213,7 +213,7 @@ module PatternRecognitionGP =
     /// </summary>
     /// <param name="interval">How many backtesting records make up a "day". 
     /// e.g. if the value 15 will generate 1 high low closing data for each 15 btc records</param>
-    let readIntervalData reader readData interval =
+    let readIntervalData reader (readData: 'a -> seq<Record list>) interval =
         let toFloat value = System.Decimal.ToDouble value
 
         let updateValues values buy =
@@ -230,7 +230,9 @@ module PatternRecognitionGP =
         let openings = new ResizeArray<float>()
         let closings = new ResizeArray<float>()
 
-        readData reader (fun (x: Record list) i values -> 
+        let initialValue = { optionalHigh = None; optionalLow = None; optionalOpening = None; optionalClosing = None }, 1
+
+        let getIntervalData (values, i) (x: Record list) =
             let (_, bitcoinQuote) = x.Head
 
             let buy = float(bitcoinQuote.buy)
@@ -245,9 +247,11 @@ module PatternRecognitionGP =
                             closings.Add(closing)
                     | _ -> ()
 
-                { optionalHigh = None; optionalLow = None; optionalOpening = None; optionalClosing = None }, 1
+                initialValue
             else
-                updateValues values buy, i + 1)
+                updateValues values buy, i + 1
+
+        Seq.fold getIntervalData initialValue (readData reader) |> ignore
 
         {
             high = highs.ToArray() 
@@ -318,7 +322,7 @@ module PatternRecognitionGP =
     
     let fitness readData (filename: string) program =
         use sr = new System.IO.StreamReader(filename)
-        let reader () =
+        let rec reader () =
             if not sr.EndOfStream then
                 Some(sr.ReadLine())
             else
