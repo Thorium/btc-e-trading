@@ -2,58 +2,49 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{ee1b722c-3d64-4db9-a2f0-0f95213ad677}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>Tests</RootNamespace>
-    <AssemblyName>TradingFrameworkTests</AssemblyName>
+    <ProjectGuid>{165fa1db-7725-4a62-a3d7-b680ff98b405}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ConsoleApplication1</RootNamespace>
+    <AssemblyName>ConsoleApplication1</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>TradingFrameworkTests</Name>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <Name>ConsoleApplication1</Name>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\TradingFrameworkTests.XML</DocumentationFile>
     <PlatformTarget>x86</PlatformTarget>
+    <DocumentationFile>bin\Debug\ConsoleApplication1.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Tests.XML</DocumentationFile>
+    <PlatformTarget>x86</PlatformTarget>
+    <DocumentationFile>bin\Release\ConsoleApplication1.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="MockDownloader.fs" />
-    <Compile Include="TestArbitrage.fs" />
-    <Compile Include="TestBacktesting.fs" />
-    <Compile Include="TestGeneticProgramming.fs" />
-    <Compile Include="TestPatternRecognitionGP.fs" />
+    <Compile Include="Program.fs" />
     <Content Include="ticker.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>obj\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>bin\Debug\nunit.framework.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />

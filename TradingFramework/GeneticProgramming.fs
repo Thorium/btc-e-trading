@@ -39,18 +39,22 @@ module GeneticProgramming =
 
     type EvaluationTree<'t, 'u> = { root: TreeNode<'t, 'u> }
 
+    let getPopulationWithFitness population fitness =
+        List.map (fun program -> program, fitness(program)) population
+
     /// Fitness must be return an integer greater than zero
-    let selectWithRandomNumberGenerator randomNumberGenerator (population: 'a list) fitness =
+    let selectWithGetPopulationWithFitness randomNumberGenerator (population:'a list) fitness getPopulationWithFitness =
         assert (population.Length > 1)
 
-        let fitness program = 
-            let fitness = fitness program
+        let populationWithFitness = getPopulationWithFitness population fitness
+
+        let extractFitness (program, fitness) = 
             assert(fitness > decimal(0))
             fitness
 
-        let sumOfFitness = List.sumBy (fun program -> fitness(program)) population
+        let sumOfFitness = List.sumBy extractFitness populationWithFitness
         
-        let populationWithProbability = List.map (fun program -> (program, fitness(program) / sumOfFitness)) population
+        let populationWithProbability = List.map (fun (program, fitness) -> (program, fitness / sumOfFitness)) populationWithFitness
 
         // Descending order
         let populationWithProbability = List.sortBy (fun (_, probability) -> probability) populationWithProbability
@@ -71,16 +75,30 @@ module GeneticProgramming =
 
         selectPopulate populationWithProbability (decimal(0))
 
-    let select population fitness =
-        let randomNumberGenerator = new Random()
-        selectWithRandomNumberGenerator (fun () -> randomNumberGenerator.NextDouble()) population fitness
+    let selectWithRandomNumberGenerator randomNumberGenerator (population:'a list) fitness =
+        selectWithGetPopulationWithFitness randomNumberGenerator (population:'a list) fitness getPopulationWithFitness
+
+    let selectNormalisePositive randomNumberGenerator population fitness =
+        let getPopulationWithFitness population fitness =
+            let populationWithFitness = List.map (fun program -> program, fitness(program)) population
+
+            let (_, (minFitness: decimal)) = List.minBy (fun (program, fitness) -> fitness) populationWithFitness
+
+            // Add small positive value to all fitnesses as we want to keep the fitness over 0
+            let smallestPositive =  1m / 100000000m
+
+            let normalise = System.Math.Abs(minFitness) + smallestPositive
+
+            List.map (fun (program, fitness) -> program, fitness + normalise) populationWithFitness
+
+        selectWithGetPopulationWithFitness randomNumberGenerator population fitness getPopulationWithFitness
 
     let generateChildren grow numberOfChildren depth branchesToTheLeft leavesToTheLeft  =
         let rec generateChild numberOfChildren children =
             let branchesToTheLeft = (List.sumBy (fun x -> match x with | Branch(x, _) -> x.NumberOfBranches | _ -> 0) children) + branchesToTheLeft
             let leavesToTheLeft = (List.sumBy (fun x -> match x with | Branch(x, _) -> x.NumberOfLeafs | Leaf(_) -> 1) children) + leavesToTheLeft
 
-            let child = grow (depth + 1) branchesToTheLeft leavesToTheLeft
+            let child = grow depth branchesToTheLeft leavesToTheLeft
 
             if numberOfChildren = 1 then
                 [child]

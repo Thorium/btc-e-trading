@@ -78,34 +78,6 @@ type TestPatternRecognitionGeneticProgramming() = class
         Assert.Fail()
 
     [<Test>]
-    member self.generateRandomFunc() =(*
-        let random = new System.Random()
-
-        let rng = (fun x -> random.Next(x))
-
-        let maxDepth = 4
-        let maxNumberOfChildren = 3
-        let chanceOfLeaf = 10 // 1 in 10 chance
-
-        let rec readData fileReader y =
-            let dog x = y x
-            TradingFramework.BackTesting.readHistoricTickerData fileReader dog
-
-        let fitness = fitness readData "ticker.txt"
-
-        let initialPrograms = [ for _ in 1..100 do yield growPatternRecogniserTree rng maxDepth maxNumberOfChildren chanceOfLeaf ]
-
-        let rec evolve i last programs =
-            if i = last then
-                programs
-            else
-                let fittestPrograms = [ for _ in 1..10 do yield select programs fitness ]
-
-                // Do crossover and mutation
-                let children = List.map (fun x -> x) fittestPrograms
-
-                evolve (i + 1) last children
-
-        evolve 0 100000 initialPrograms*)
+    member self.generateRandomFunc() =
         Assert.Fail()
 end

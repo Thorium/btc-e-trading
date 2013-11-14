@@ -91,4 +91,4 @@ module PatternRecognitionGP =
 
     val public growPatternRecogniserTree: randomNumberGenerator:(int -> int) -> (int -> int -> int -> EvaluationTree<Func, Action>)
 
-    val public fitness: readData:((unit -> string option) -> seq<Record list>) -> filename:string -> EvaluationTree<Func, Action> -> decimal
+    val public fitness: openHighLowClose:OpenHighLowClose -> EvaluationTree<Func, Action> -> decimal

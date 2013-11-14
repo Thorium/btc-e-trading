@@ -30,15 +30,15 @@ module Library =
         | Success of 'T
         | Error of Core.RetCode
 
-    let apply func length = 
+    let apply func size = 
         let startIndex = ref 0
-        let endIndex = ref 0
-        let mutable resultData: 'T [] = Array.create<'T> (length) Unchecked.defaultof<'T>
+        let numberOfElements = ref 0
+        let mutable resultData: 'T [] = Array.create<'T> (size) Unchecked.defaultof<'T>
 
-        let result = func startIndex endIndex resultData
+        let result = func startIndex numberOfElements resultData
 
         if result = Core.RetCode.Success then
-            Success(resultData.[!startIndex..(!endIndex) - 1])
+            Success(resultData.[!startIndex..(!startIndex) + (!numberOfElements) - 1])
         else
             Error(result)
 

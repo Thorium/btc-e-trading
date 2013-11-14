@@ -131,7 +131,10 @@ module PatternRecognitionGP =
     let func (arguments: FunctionArguments) values =
         match arguments.patternFunc values.high values.low values.opening values.closing with
             | TaLib.Library.Success(value) -> 
-                arguments.operator value.[value.Length] arguments.value
+                if value.Length = 0 then
+                    false
+                else
+                    arguments.operator value.[value.Length - 1] arguments.value
             | TaLib.Library.Error(code) -> 
                 failwith ("Error, failed to run pattern recogniser, returned code: " + code.ToString())
 
@@ -219,8 +222,8 @@ module PatternRecognitionGP =
         let updateValues values buy =
             let buy = Some(buy)
             {
-                optionalHigh = if buy > values.optionalHigh then buy else values.optionalHigh
-                optionalLow = if buy < values.optionalLow then buy else values.optionalLow
+                optionalHigh = if values.optionalHigh.IsNone || buy > values.optionalHigh then buy else values.optionalHigh
+                optionalLow = if values.optionalLow.IsNone || buy < values.optionalLow then buy else values.optionalLow
                 optionalOpening = if values.optionalOpening.IsNone then buy else values.optionalOpening
                 optionalClosing = buy
             }
@@ -305,38 +308,29 @@ module PatternRecognitionGP =
         assert(values.high.Length = values.low.Length && values.low.Length = values.opening.Length 
             && values.opening.Length = values.closing.Length)
 
-        let rec evaluateEachRecord i actions =
-            if i >= 0 then
+        let rec evaluateEachRecord i length actions =
+            if i < length then
                 let action = evaluateTree program {
-                                    high=values.high.[0..i]
-                                    low = values.low.[0..i]
-                                    opening = values.opening.[0..i]
-                                    closing = values.closing.[0..i]
+                                    high = values.high.[..i]
+                                    low = values.low.[..i]
+                                    opening = values.opening.[..i]
+                                    closing = values.closing.[..i]
                                 }, decimal(values.closing.[i])
 
-                evaluateEachRecord (i - 1) (action :: actions)
+                evaluateEachRecord (i + 1) length (action :: actions)
             else
                 actions
 
-        evaluateEachRecord (values.high.Length - 1) []
+        evaluateEachRecord 0 values.high.Length []
     
-    let fitness readData (filename: string) program =
-        use sr = new System.IO.StreamReader(filename)
-        let rec reader () =
-            if not sr.EndOfStream then
-                Some(sr.ReadLine())
-            else
-                None
-
-        let interval = 15
-
-        let values = readIntervalData reader readData interval
-
-        let actions = evaluateProgramAgainstIntervalData program values
+    let fitness openHighLowClose program =
+        let actions = evaluateProgramAgainstIntervalData program openHighLowClose
 
         let result = float(evaluateActions actions (decimal(0)))
 
         if result < 0.0 then
             decimal(-System.Math.Log(System.Math.Abs(result)))
-        else
+        else if result > 0.0 then
             decimal(System.Math.Log(result))
+        else
+            decimal(0)

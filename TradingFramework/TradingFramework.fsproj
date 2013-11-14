@@ -42,8 +42,8 @@
     <Compile Include="GeneticProgramming.fsi" />
     <Compile Include="GeneticProgramming.fs" />
     <Compile Include="PatternRecognitionGP.fsi" />
-    <None Include="README.md" />
     <Compile Include="PatternRecognitionGP.fs" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

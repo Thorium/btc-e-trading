@@ -39,11 +39,15 @@
   <ItemGroup>
     <Compile Include="TaLib.fsi" />
     <Compile Include="TaLib.fs" />
+    <Compile Include="TaLibTests.fs" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
+    <Reference Include="nunit.framework">
+      <HintPath>obj\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
