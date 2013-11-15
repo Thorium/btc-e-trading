@@ -526,53 +526,53 @@ type TestGeneticProgramming() = class
 
         let fitness = getFitness [| decimal(10);decimal(20);decimal(30);decimal(40) |] values
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.0) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.0) values fitness
         Assert.AreEqual(1, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.09) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.09) values fitness
         Assert.AreEqual(1, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.1) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.1) values fitness
         Assert.AreEqual(2, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.29) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.29) values fitness
         Assert.AreEqual(2, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.3) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.3) values fitness
         Assert.AreEqual(3, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.59) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.59) values fitness
         Assert.AreEqual(3, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.61) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.61) values fitness
         Assert.AreEqual(4, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.99) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.99) values fitness
         Assert.AreEqual(4, selectedValue)
 
         let fitness = getFitness [| decimal(0.1);decimal(0.2);decimal(0.3);decimal(0.4) |] values
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.0) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.0) values fitness
         Assert.AreEqual(1, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.09) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.09) values fitness
         Assert.AreEqual(1, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.1) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.1) values fitness
         Assert.AreEqual(2, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.29) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.29) values fitness
         Assert.AreEqual(2, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.3) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.3) values fitness
         Assert.AreEqual(3, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.59) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.59) values fitness
         Assert.AreEqual(3, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.61) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.61) values fitness
         Assert.AreEqual(4, selectedValue)
 
-        let selectedValue = selectWithRandomNumberGenerator (fun _ -> 0.99) values fitness
+        let selectedValue = fitnessProportionalSelection (fun _ -> 0.99) values fitness
         Assert.AreEqual(4, selectedValue)
 end

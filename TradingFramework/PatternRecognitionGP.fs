@@ -120,7 +120,7 @@ module PatternRecognitionGP =
             closing: float []
         }
 
-    type Func = OpenHighLowClose -> bool
+    type Func = OpenHighLowClose * int -> bool
 
     type FunctionArguments = {
         patternFunc: PatternRecognitionFunction
@@ -128,7 +128,7 @@ module PatternRecognitionGP =
         value: int
     }
 
-    let func (arguments: FunctionArguments) values =
+    let func (arguments: FunctionArguments) (values, endIndex: int) =
         match arguments.patternFunc values.high values.low values.opening values.closing with
             | TaLib.Library.Success(value) -> 
                 if value.Length = 0 then
@@ -270,7 +270,7 @@ module PatternRecognitionGP =
     /// <param name="startValue">Value the evaluation will start from. 
     /// e.g. if you start on 100 and have a single action buy 10, then 90 will be returned.</param>
     let evaluateActions actions (startValue: decimal) =
-        let evaluate = fun runningTotal (action, price) ->
+        let evaluate runningTotal (action, price) =
             match action with
             | Buy -> runningTotal - price
             | Sell -> runningTotal + price
@@ -305,17 +305,13 @@ module PatternRecognitionGP =
         walkTree tree.root
 
     let evaluateProgramAgainstIntervalData program values =
-        assert(values.high.Length = values.low.Length && values.low.Length = values.opening.Length 
+        assert(values.high.Length = values.low.Length 
+            && values.low.Length = values.opening.Length 
             && values.opening.Length = values.closing.Length)
 
         let rec evaluateEachRecord i length actions =
             if i < length then
-                let action = evaluateTree program {
-                                    high = values.high.[..i]
-                                    low = values.low.[..i]
-                                    opening = values.opening.[..i]
-                                    closing = values.closing.[..i]
-                                }, decimal(values.closing.[i])
+                let action = (evaluateTree program (values, i)), decimal(values.closing.[i])
 
                 evaluateEachRecord (i + 1) length (action :: actions)
             else

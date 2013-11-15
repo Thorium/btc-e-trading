@@ -43,9 +43,9 @@ module GeneticProgramming =
     /// <param name="randomNumberGenerator">Function that's expected to generate a random number in the range of 0.0..0.1</param>
     /// <param name="population">Population to select a program from.</param>
     /// <param name="fitness">Fitness function, applied to each program in the population, expected to return an int, the higher the returned value is the more likely it is to be selected.</param>
-    val public selectWithRandomNumberGenerator: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> decimal) -> 'a
+    val public fitnessProportionalSelection: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> decimal) -> 'a
 
-    val public selectNormalisePositive: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> decimal) -> 'a
+    val public tournamentSelection: randomNumberGenerator:(int -> int) -> population:'a list -> fitness:('a -> decimal) -> tournamentSize:int -> 'a
 
     val public populateByGrowthApply: branchGenerator:(unit -> 'a) -> leafGenerator:(unit -> 'b) -> generateIsLeaf:(int -> int -> int -> bool) -> generateNumberOfChildren:(int -> int -> int -> int) -> EvaluationTree<'a, 'b>
         
@@ -83,3 +83,5 @@ module GeneticProgramming =
     /// <param name="selectNode">Function that's expected to return a node to perform the crossover on when given a tree (will be called once for each tree).</param>
     /// <param name="mutate">This function is applied to all nodes in the trees, if you return a new node then the node passed to the function will be replaced in the crossed over trees with the new node.</param>
     val public crossover: lhs:EvaluationTree<'a, 'b> -> rhs:EvaluationTree<'a, 'b> -> selectNode:(EvaluationTree<'a, 'b> -> TreeNode<'a,'b> option) -> mutate:(TreeNode<'a,'b> -> TreeNode<'a,'b>) -> EvaluationTree<'a, 'b> * EvaluationTree<'a, 'b>
+
+    val public reproduce: program:EvaluationTree<'a, 'b> -> mutate:(TreeNode<'a,'b> -> TreeNode<'a,'b>) -> EvaluationTree<'a, 'b>

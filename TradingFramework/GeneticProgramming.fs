@@ -43,7 +43,7 @@ module GeneticProgramming =
         List.map (fun program -> program, fitness(program)) population
 
     /// Fitness must be return an integer greater than zero
-    let selectWithGetPopulationWithFitness randomNumberGenerator (population:'a list) fitness getPopulationWithFitness =
+    let fitnessProportionalSelection randomNumberGenerator (population:'a list) fitness =
         assert (population.Length > 1)
 
         let populationWithFitness = getPopulationWithFitness population fitness
@@ -60,7 +60,6 @@ module GeneticProgramming =
         let populationWithProbability = List.sortBy (fun (_, probability) -> probability) populationWithProbability
         
         let randomNumber = randomNumberGenerator()
-        
         assert (randomNumber >= 0.0 && randomNumber < 1.0)
 
         let rec selectPopulate populationWithProbability accumulator =
@@ -75,23 +74,18 @@ module GeneticProgramming =
 
         selectPopulate populationWithProbability (decimal(0))
 
-    let selectWithRandomNumberGenerator randomNumberGenerator (population:'a list) fitness =
-        selectWithGetPopulationWithFitness randomNumberGenerator (population:'a list) fitness getPopulationWithFitness
+    let tournamentSelection randomNumberGenerator (population:'a list) (fitness:'a -> decimal) tournamentSize = 
+        let populationWithFitness = getPopulationWithFitness population fitness
 
-    let selectNormalisePositive randomNumberGenerator population fitness =
-        let getPopulationWithFitness population fitness =
-            let populationWithFitness = List.map (fun program -> program, fitness(program)) population
+        let tournament = [ 
+            for _ in 1..tournamentSize do 
+            let index = randomNumberGenerator tournamentSize
+            assert(index >= 0 && index < populationWithFitness.Length)
+            yield populationWithFitness.[index] ]
 
-            let (_, (minFitness: decimal)) = List.minBy (fun (program, fitness) -> fitness) populationWithFitness
+        let (winner, _) = List.maxBy (fun (_, fitness) -> fitness) tournament
 
-            // Add small positive value to all fitnesses as we want to keep the fitness over 0
-            let smallestPositive =  1m / 100000000m
-
-            let normalise = System.Math.Abs(minFitness) + smallestPositive
-
-            List.map (fun (program, fitness) -> program, fitness + normalise) populationWithFitness
-
-        selectWithGetPopulationWithFitness randomNumberGenerator population fitness getPopulationWithFitness
+        winner
 
     let generateChildren grow numberOfChildren depth branchesToTheLeft leavesToTheLeft  =
         let rec generateChild numberOfChildren children =
@@ -226,6 +220,9 @@ module GeneticProgramming =
             Data = branchNode.Data
         }
         TreeNode.Branch(branchNode, children)
+
+    let reproduce program mutate =
+        { root = copyNode copyLeaf copyBranch (fun _ _ _ _ -> None) 0 0 program.root mutate }
 
     /// <summary>
     /// Combines two trees (programs) together at a random point. The root of the rhs tree replaces a node somewhere within the lhs tree.
