@@ -59,15 +59,15 @@ let printTree tree printData =
 type TestGeneticProgramming() = class
     [<Test>]
     member self.grow() = 
-        let maxDepth = 4
+        let maxDepth = 3
 
-        let generateIsLeaf depth _ _ = depth = maxDepth
+        let generateIsLeaf depth _ _ = depth = maxDepth - 1
 
         let generateNumberOfChildren _ _ _ = 3
 
         let i = ref 0
 
-        let array = [| 0..20 |]
+        let array = [| 0..12 |]
 
         let generator = (fun _ -> 
             let r = array.[!i]
