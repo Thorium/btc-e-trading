@@ -517,7 +517,7 @@ type TestGeneticProgramming() = class
         Assert.AreEqual(Some(root), selectedNode)
 
     [<Test>]
-    member self.select() = 
+    member self.fitnessProportionalSelection() = 
         let getFitness (fitnessValues: 'a []) (selectionValues: int list) value = 
             let i = List.findIndex (fun v -> v = value) selectionValues
             fitnessValues.[i]
@@ -575,4 +575,39 @@ type TestGeneticProgramming() = class
 
         let selectedValue = fitnessProportionalSelection (fun _ -> 0.99) values fitness
         Assert.AreEqual(4, selectedValue)
+
+    [<Test>]
+    member self.tournamentSelection() = 
+        let getFitness (fitnessValues: 'a []) (selectionValues: int list) value = 
+            let i = List.findIndex (fun v -> v = value) selectionValues
+            fitnessValues.[i]
+
+        let values = [1;2;3;4;5]
+
+        let fitness = getFitness [| decimal(10);decimal(20);decimal(30);decimal(10);decimal(40) |] values
+
+        let i = ref 1
+
+        let func _ = 
+            let r = !i;
+            incr i;
+            r
+
+        let selectedValue = tournamentSelection func values fitness 3
+        Assert.AreEqual(3, selectedValue)
+
+        i := 0
+
+        let selectedValue = tournamentSelection func values fitness 2
+        Assert.AreEqual(2, selectedValue)
+
+        i := 0
+
+        let selectedValue = tournamentSelection func values fitness 1
+        Assert.AreEqual(1, selectedValue)
+
+        i := 0
+
+        let selectedValue = tournamentSelection func values fitness 5
+        Assert.AreEqual(5, selectedValue)
 end

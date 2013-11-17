@@ -75,6 +75,8 @@ module GeneticProgramming =
         selectPopulate populationWithProbability (decimal(0))
 
     let tournamentSelection randomNumberGenerator (population:'a list) (fitness:'a -> decimal) tournamentSize = 
+        assert(tournamentSize > 0 && tournamentSize <= population.Length)
+
         let populationWithFitness = getPopulationWithFitness population fitness
 
         let tournament = [ 
