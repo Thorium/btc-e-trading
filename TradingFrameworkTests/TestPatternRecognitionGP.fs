@@ -43,7 +43,52 @@ type TestPatternRecognitionGeneticProgramming() = class
 
     [<Test>]
     member self.readIntervalData() =
-        Assert.Fail()
+        let quote x : BtceApiFramework.PublicBtceApi.Quote = 
+            {
+                high = decimal(0)
+                low = decimal(0)
+                average = decimal(0)
+                tradingVolume = decimal(0)
+                tradingVolumeInCurrency = decimal(0)
+                lastTransactionPrice = decimal(0)
+                buy = decimal(x)
+                sell = decimal(0)
+                updated = int64(0)
+            }
+
+        let pair = (BtceApiFramework.Currency.Currency.BTC, BtceApiFramework.Currency.Currency.USD)
+
+        let records = [
+            [pair, quote 1]
+            [pair, quote 2]
+            [pair, quote 3]
+
+            [pair, quote 1]
+            [pair, quote 1]
+            [pair, quote 1]
+
+            [pair, quote 3]
+            [pair, quote 4]
+            [pair, quote 1]
+            
+            [pair, quote 10]
+        ]
+
+        let readData _ = seq { for record in records do yield record }
+
+        let interval = 3
+
+        let data = readIntervalData () readData interval
+
+        System.Console.WriteLine(data.opening.ToString())
+        System.Console.WriteLine(data.closing)
+        System.Console.WriteLine(data.high)
+        System.Console.WriteLine(data.low)
+
+        Assert.AreEqual([| 1;1;3 |], data.opening)
+        Assert.AreEqual([| 3;1;1 |], data.closing)
+        Assert.AreEqual([| 3;1;4 |], data.high)
+        Assert.AreEqual([| 1;1;1 |], data.low)
 
     [<Test>]
     member self.evaluateProgramAgainstIntervalData() =

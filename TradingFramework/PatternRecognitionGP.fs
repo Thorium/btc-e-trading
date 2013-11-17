@@ -241,7 +241,7 @@ module PatternRecognitionGP =
             let buy = float(bitcoinQuote.buy)
 
             if i = interval then
-                match values with
+                match updateValues values buy with
                     | { optionalHigh = Some(high); optionalLow = Some(low)
                         optionalOpening = Some(opening); optionalClosing = Some(closing) } ->
                             highs.Add(high)
