@@ -48,7 +48,7 @@ module PatternRecognitionGP =
 
     type public FunctionArguments = 
         {
-            patternFunc: PatternRecognitionFunction
+            patternFunc: System.Func<PatternRecognitionFunction>
             operator: (int -> int -> bool)
             value: int
         }

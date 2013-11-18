@@ -28,7 +28,7 @@ module PatternRecognitionGP =
     open BackTesting
     open GeneticProgramming
 
-    let patternRecognisers = [|
+    let patternRecogniserFunctions = [|
         cdl3BlackCrows
         cdl3Inside
         cdl3LineStrike
@@ -91,6 +91,24 @@ module PatternRecognitionGP =
     |]
 
     type PatternRecognitionFunction = int -> int -> float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int [] * int * int>
+    
+    /// Array of Func objects containing the pattern recogniser functions so we can memoize the values the functions compute (function types cannot be compared for equality).
+    let patternRecognisers = 
+        patternRecogniserFunctions |> 
+            Array.map (fun x -> new System.Func<PatternRecognitionFunction>(fun () -> x)) 
+            
+    let memoizePatternRecognitionComputation values =
+        let cache = new System.Collections.Generic.Dictionary<System.Func<PatternRecognitionFunction>, _>()
+
+        fun patternRecogniser ->
+            let dog = Operators.id patternRecogniser
+            let containsValue, containedValues = cache.TryGetValue(patternRecogniser)
+
+            if containsValue then 
+                containedValues
+            else
+                cache.[patternRecogniser] <- values
+                values
 
     let operators = [|
         (>)
@@ -123,13 +141,13 @@ module PatternRecognitionGP =
     type Func = OpenHighLowClose * int -> bool
 
     type FunctionArguments = {
-        patternFunc: PatternRecognitionFunction
+        patternFunc: System.Func<PatternRecognitionFunction>
         operator: (int -> int -> bool)
         value: int
     }
 
     let func (arguments: FunctionArguments) (values, endIndex: int) =
-        match arguments.patternFunc 0 endIndex values.high values.low values.opening values.closing with
+        match (arguments.patternFunc.Invoke()) 0 endIndex values.high values.low values.opening values.closing with
             | TaLib.Library.Success(value, _, length) -> 
                 if value.Length = 0 then
                     false
@@ -311,7 +329,7 @@ module PatternRecognitionGP =
 
         let rec evaluateEachRecord i length actions =
             if i < length then
-                let action = (evaluateTree program (values, i)), decimal(values.closing.[i])
+                let action = (evaluateTree program (values, i + 1)), decimal(values.closing.[i])
 
                 evaluateEachRecord (i + 1) length (action :: actions)
             else
