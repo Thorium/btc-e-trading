@@ -44,7 +44,7 @@ module PatternRecognitionGP =
 
     type public Func = OpenHighLowClose * int -> bool
 
-    type public PatternRecognitionFunction = float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int []>
+    type public PatternRecognitionFunction = int -> int -> float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int [] * int * int>
 
     type public FunctionArguments = 
         {

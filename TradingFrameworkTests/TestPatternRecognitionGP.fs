@@ -80,19 +80,10 @@ type TestPatternRecognitionGeneticProgramming() = class
 
         let data = readIntervalData () readData interval
 
-        System.Console.WriteLine(data.opening.ToString())
-        System.Console.WriteLine(data.closing)
-        System.Console.WriteLine(data.high)
-        System.Console.WriteLine(data.low)
-
         Assert.AreEqual([| 1;1;3 |], data.opening)
         Assert.AreEqual([| 3;1;1 |], data.closing)
         Assert.AreEqual([| 3;1;4 |], data.high)
         Assert.AreEqual([| 1;1;1 |], data.low)
-
-    [<Test>]
-    member self.evaluateProgramAgainstIntervalData() =
-        Assert.Fail()
 
     [<Test>]
     member self.fitness() =

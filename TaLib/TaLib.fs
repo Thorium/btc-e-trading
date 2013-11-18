@@ -38,34 +38,34 @@ module Library =
         let result = func startIndex numberOfElements resultData
 
         if result = Core.RetCode.Success then
-            Success(resultData.[!startIndex..(!startIndex) + (!numberOfElements) - 1])
+            Success(resultData, !startIndex, !numberOfElements)
         else
             Error(result)
 
     let apply2 func length = 
         let startIndex = ref 0
-        let endIndex = ref 0
+        let numberOfElements = ref 0
         let mutable resultData: 'T [] = Array.create<'T> (length) Unchecked.defaultof<'T>
         let mutable resultData2: 'T [] = Array.create<'T> (length) Unchecked.defaultof<'T>
 
-        let result = func startIndex endIndex resultData resultData2
+        let result = func startIndex numberOfElements resultData resultData2
 
         if result = Core.RetCode.Success then
-            Success(resultData.[!startIndex..(!endIndex) - 1], resultData2.[!startIndex..(!endIndex) - 1])
+            Success(resultData, resultData2, !startIndex, !numberOfElements)
         else
             Error(result)
 
     let apply3 func length = 
         let startIndex = ref 0
-        let endIndex = ref 0
+        let numberOfElements = ref 0
         let mutable resultData: 'T [] = Array.create<'T> (length) Unchecked.defaultof<'T>
         let mutable resultData2: 'T [] = Array.create<'T> (length) Unchecked.defaultof<'T>
         let mutable resultData3: 'T [] = Array.create<'T> (length) Unchecked.defaultof<'T>
 
-        let result = func startIndex endIndex resultData resultData2 resultData3
+        let result = func startIndex numberOfElements resultData resultData2 resultData3
 
         if result = Core.RetCode.Success then
-            Success(resultData.[!startIndex..(!endIndex) - 1], resultData2.[!startIndex..(!endIndex) - 1], resultData3.[!startIndex..(!endIndex) - 1])
+            Success(resultData, resultData2, resultData3, !startIndex, !numberOfElements)
         else
             Error(result)
 
@@ -293,210 +293,217 @@ module Library =
             
     module PatternRecognition =
 
-        let operate high low opening (closing: float []) operation =
+        let operate start length high low opening (closing: float []) operation =
             let length = closing.Length
-            apply (operation 0 (length - 1) opening high low closing) length
+            apply (operation start length  opening high low closing) length
 
-        let operateWithPenetration high low opening (closing: float []) penetration operation =
+        let operateWithPenetration start length high low opening (closing: float []) penetration operation =
             let length = closing.Length
-            apply (operation 0 (length - 1) opening high low closing penetration) length
+            apply (operation start length  opening high low closing penetration) length
 
-        let cdl2Crows (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl2Crows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl2Crows start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl2Crows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdl3BlackCrows (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3BlackCrows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl3BlackCrows start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3BlackCrows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdl3Inside (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3Inside(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl3Inside start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3Inside(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdl3LineStrike (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3LineStrike(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl3LineStrike start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3LineStrike(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdl3Outside (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3Outside(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl3Outside start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3Outside(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdl3StarsInSouth (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3StarsInSouth(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl3StarsInSouth start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3StarsInSouth(x1,x2,x3,x4,x5,x6,x7,x8,x9))
            
-        let cdl3WhiteSoldiers (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3WhiteSoldiers(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdl3WhiteSoldiers start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.Cdl3WhiteSoldiers(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlAbandonedBabyWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlAbandonedBaby(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlAbandonedBabyWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlAbandonedBaby(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlAbandonedBaby high low opening closing = cdlAbandonedBabyWithPenetration high low opening closing taRealDefault
+        let cdlAbandonedBaby start (length: int) high low opening closing = 
+            cdlAbandonedBabyWithPenetration start length high low opening closing taRealDefault
 
-        let cdlAdvanceBlock (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlAdvanceBlock(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlAdvanceBlock start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlAdvanceBlock(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlBeltHold (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlBeltHold(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlBeltHold start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlBeltHold(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlBreakaway (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlBreakaway(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlBreakaway start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlBreakaway(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlClosingMarubozu (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlClosingMarubozu(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlClosingMarubozu start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlClosingMarubozu(x1,x2,x3,x4,x5,x6,x7,x8,x9))
              
-        let cdlConcealBabysWall (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlConcealBabysWall(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlConcealBabysWall start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlConcealBabysWall(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlCounterAttack (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlCounterAttack(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlCounterAttack start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlCounterAttack(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlDarkCloudCoverWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlDarkCloudCover(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlDarkCloudCoverWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlDarkCloudCover(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlDarkCloudCover high low opening closing = cdlDarkCloudCoverWithPenetration high low opening closing taRealDefault
+        let cdlDarkCloudCover start (length: int) high low opening closing = 
+            cdlDarkCloudCoverWithPenetration start length high low opening closing taRealDefault
 
-        let cdlDoji (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlDoji start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlDojiStar (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlDojiStar(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlDojiStar start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlDojiStar(x1,x2,x3,x4,x5,x6,x7,x8,x9))
             
-        let cdlDragonflyDoji (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlDragonflyDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlDragonflyDoji start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlDragonflyDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlEngulfing (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlEngulfing(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlEngulfing start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlEngulfing(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlEveningDojiStarWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlEveningDojiStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlEveningDojiStarWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlEveningDojiStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlEveningDojiStar high low opening closing = cdlEveningDojiStarWithPenetration high low opening closing taRealDefault
+        let cdlEveningDojiStar start (length: int) high low opening closing = 
+            cdlEveningDojiStarWithPenetration start length high low opening closing taRealDefault
 
-        let cdlEveningStarWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlEveningStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlEveningStarWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlEveningStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlEveningStar high low opening closing = cdlEveningStarWithPenetration high low opening closing taRealDefault
+        let cdlEveningStar start (length: int) high low opening closing = 
+            cdlEveningStarWithPenetration start length high low opening closing taRealDefault
 
-        let cdlGapSideSideWhite (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlGapSideSideWhite(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlGapSideSideWhite start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlGapSideSideWhite(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlGravestoneDoji (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlGravestoneDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlGravestoneDoji start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlGravestoneDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHammer (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHammer(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHammer start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHammer(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHangingMan (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHangingMan(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHangingMan start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHangingMan(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHarami (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHarami(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHarami start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHarami(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHaramiCross (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHaramiCross(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHaramiCross start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHaramiCross(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHignWave (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHignWave(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHignWave start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHignWave(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHikkake (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHikkake(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHikkake start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHikkake(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHikkakeMod (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHikkakeMod(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHikkakeMod start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHikkakeMod(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlHomingPigeon (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHomingPigeon(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlHomingPigeon start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlHomingPigeon(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlIdentical3Crows (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlIdentical3Crows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlIdentical3Crows start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlIdentical3Crows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlInNeck (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlInNeck(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlInNeck start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlInNeck(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlInvertedHammer (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlInvertedHammer(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlInvertedHammer start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlInvertedHammer(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlKicking (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlKicking(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlKicking start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlKicking(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlKickingByLength (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlKickingByLength(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlKickingByLength start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlKickingByLength(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlLadderBottom (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlLadderBottom(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlLadderBottom start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlLadderBottom(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlLongLeggedDoji (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlLongLeggedDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlLongLeggedDoji start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlLongLeggedDoji(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlLongLine (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlLongLine(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlLongLine start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlLongLine(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlMarubozu (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlMarubozu(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlMarubozu start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlMarubozu(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlMatchingLow (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlMatchingLow(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlMatchingLow start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlMatchingLow(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlMatHoldWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlMatHold(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlMatHoldWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlMatHold(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlMatHold high low opening closing = cdlMatHoldWithPenetration high low opening closing taRealDefault
+        let cdlMatHold start (length: int) high low opening closing = 
+            cdlMatHoldWithPenetration start length high low opening closing taRealDefault
 
-        let cdlMorningDojiStarWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlMorningDojiStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlMorningDojiStarWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlMorningDojiStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlMorningDojiStar high low opening closing = cdlMorningDojiStarWithPenetration high low opening closing taRealDefault
+        let cdlMorningDojiStar start (length: int) high low opening closing = 
+            cdlMorningDojiStarWithPenetration start length high low opening closing taRealDefault
 
-        let cdlMorningStarWithPenetration (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
-            operateWithPenetration high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlMorningStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+        let cdlMorningStarWithPenetration start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) penetration =
+            operateWithPenetration start length high low opening closing penetration (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 -> Core.CdlMorningStar(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
     
-        let cdlMorningStar high low opening closing = cdlMorningStarWithPenetration high low opening closing taRealDefault
+        let cdlMorningStar start (length: int) high low opening closing = 
+            cdlMorningStarWithPenetration start length high low opening closing taRealDefault
 
-        let cdlOnNeck (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlOnNeck(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlOnNeck start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlOnNeck(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlPiercing (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlPiercing(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlPiercing start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlPiercing(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlRickshawMan (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlRickshawMan(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlRickshawMan start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlRickshawMan(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlRiseFall3Methods (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlRiseFall3Methods(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlRiseFall3Methods start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlRiseFall3Methods(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlSeperatingLines (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlSeperatingLines(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlSeperatingLines start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlSeperatingLines(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlShootingStar (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlShootingStar(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlShootingStar start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlShootingStar(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlShortLine (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlShortLine(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlShortLine start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlShortLine(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlSpinningTop (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlSpinningTop(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlSpinningTop start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlSpinningTop(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlStalledPattern (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlStalledPattern(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlStalledPattern start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlStalledPattern(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlStickSandwhich (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlStickSandwhich(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlStickSandwhich start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlStickSandwhich(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlTakuri (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlTakuri(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlTakuri start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlTakuri(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlTasukiGap (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlTasukiGap(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlTasukiGap start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlTasukiGap(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlThrusting (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlThrusting(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlThrusting start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlThrusting(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlTristar (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlTristar(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlTristar start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlTristar(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlUnique3River (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlUnique3River(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlUnique3River start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlUnique3River(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlUpsideGap2Crows (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlUpsideGap2Crows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlUpsideGap2Crows start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlUpsideGap2Crows(x1,x2,x3,x4,x5,x6,x7,x8,x9))
 
-        let cdlXSideGap3Methods (high: float []) (low: float []) (opening: float []) (closing: float []) =
-            operate high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlXSideGap3Methods(x1,x2,x3,x4,x5,x6,x7,x8,x9))
+        let cdlXSideGap3Methods start (length: int) (high: float []) (low: float []) (opening: float []) (closing: float []) =
+            operate start length high low opening closing (fun x1 x2 x3 x4 x5 x6 x7 x8 x9 -> Core.CdlXSideGap3Methods(x1,x2,x3,x4,x5,x6,x7,x8,x9))
             
     module PriceTransformation =
         

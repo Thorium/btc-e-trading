@@ -90,7 +90,7 @@ module PatternRecognitionGP =
         cdlXSideGap3Methods
     |]
 
-    type PatternRecognitionFunction = float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int []>
+    type PatternRecognitionFunction = int -> int -> float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int [] * int * int>
 
     let operators = [|
         (>)
@@ -129,12 +129,12 @@ module PatternRecognitionGP =
     }
 
     let func (arguments: FunctionArguments) (values, endIndex: int) =
-        match arguments.patternFunc values.high values.low values.opening values.closing with
-            | TaLib.Library.Success(value) -> 
+        match arguments.patternFunc 0 endIndex values.high values.low values.opening values.closing with
+            | TaLib.Library.Success(value, _, length) -> 
                 if value.Length = 0 then
                     false
                 else
-                    arguments.operator value.[value.Length - 1] arguments.value
+                    arguments.operator value.[length - 1] arguments.value
             | TaLib.Library.Error(code) -> 
                 failwith ("Error, failed to run pattern recogniser, returned code: " + code.ToString())
 
