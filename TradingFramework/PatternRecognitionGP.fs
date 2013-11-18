@@ -91,24 +91,28 @@ module PatternRecognitionGP =
     |]
 
     type PatternRecognitionFunction = int -> int -> float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int [] * int * int>
-    
-    /// Array of Func objects containing the pattern recogniser functions so we can memoize the values the functions compute (function types cannot be compared for equality).
-    let patternRecognisers = 
-        patternRecogniserFunctions |> 
-            Array.map (fun x -> new System.Func<PatternRecognitionFunction>(fun () -> x)) 
-            
-    let memoizePatternRecognitionComputation values =
-        let cache = new System.Collections.Generic.Dictionary<System.Func<PatternRecognitionFunction>, _>()
+      
+    let memoizePatternRecognitionComputation () =
+        let cache = System.Collections.Generic.Dictionary<System.Func<PatternRecognitionFunction>, _>()
 
-        fun patternRecogniser ->
-            let dog = Operators.id patternRecogniser
+        fun (patternRecogniser: System.Func<PatternRecognitionFunction>) start length high low opening closing ->
             let containsValue, containedValues = cache.TryGetValue(patternRecogniser)
 
             if containsValue then 
                 containedValues
             else
-                cache.[patternRecogniser] <- values
-                values
+                let result = patternRecogniser.Invoke() start length high low opening closing
+                cache.[patternRecogniser] <- result
+                result
+
+    /// Array of Func objects containing the pattern recogniser functions so we can memoize the values the functions compute (function types cannot be compared for equality).
+    let patternRecognisers = 
+        patternRecogniserFunctions |> 
+            Array.map (fun patternRecogniser -> 
+                let container = new System.Func<PatternRecognitionFunction>(fun () -> patternRecogniser)
+
+                new System.Func<PatternRecognitionFunction>(fun () start length high low opening closing -> 
+                    memoizePatternRecognitionComputation() container start length high low opening closing))
 
     let operators = [|
         (>)
