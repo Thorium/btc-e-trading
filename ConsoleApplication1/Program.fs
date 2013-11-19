@@ -1,27 +1,19 @@
-﻿open TradingFramework.GeneticProgramming
+open TradingFramework.GeneticProgramming
 open TradingFramework.PatternRecognitionGP
 
+let copyNodeValue nodeValue data =
+    {
+        BranchNumber = nodeValue.BranchNumber
+        LeafNumber = nodeValue.LeafNumber
+        NumberOfBranches = nodeValue.NumberOfBranches
+        NumberOfLeafs = nodeValue.NumberOfLeafs
+        Data = data
+    }
+
 let main () =
-
-    let random = new System.Random()
-
-    let rng x = random.Next(x)
-
-    let opening = [| for _ in 1..1000 do yield float(rng 100) |]
-    let closing = [| for _ in 1..1000 do yield float(rng 100) |]
-    let high = [| for _ in 21..1020 do yield float(rng 100) |]
-    let low = [| for _ in 11..1010 do yield float(rng 100) |]
-
-    let result = TicTacTec.TA.Library.Core.Cdl3StarsInSouthLookback()
-
-    let data = TaLib.Library.PatternRecognition.cdl3StarsInSouth 12 900 opening closing high low
-
-    ignore
-
-(*
-    let maxDepth = 2
-    let maxNumberOfChildren = 2
-    let chanceOfLeaf = 3 // 1 in 3 chance
+    let maxDepth = 3
+    let maxNumberOfChildren = 3
+    let chanceOfLeaf = 10 // 1 in 3 chance
 
     let rec readData fileReader = TradingFramework.BackTesting.readHistoricTickerData fileReader
 
@@ -42,25 +34,57 @@ let main () =
 
     let rng = (fun x -> random.Next(x))
 
-    let select = tournamentSelection rng
+    let select = tournamentSelectionPopulationWithFitness rng
 
-    let initialPrograms = [ for _ in 1..100 do yield growPatternRecogniserTree rng maxDepth maxNumberOfChildren chanceOfLeaf ]
+    let populationSize = 100
+
+    let initialPrograms = [ for _ in 1..populationSize do yield growPatternRecogniserTree rng maxDepth maxNumberOfChildren chanceOfLeaf ]
         
     let tournamentSize = 15
 
-    let rec evolve i last programs =
-        if i = last then
+    let chanceOfMutation = 30 // 1 in 30 chance
+
+    let mutate = function 
+    | Leaf(nodeValue) -> Leaf(copyNodeValue nodeValue <| generateRandomAction rng)
+    | Branch(nodeValue, children) -> 
+        let nodeValue = if rng chanceOfMutation = 1 then 
+                            nodeValue
+                        else 
+                            nodeValue
+        Branch(copyNodeValue nodeValue nodeValue.Data, children)
+
+    // Only crossover on two branch nodes.
+    let crossover lhs rhs selectNode mutate =
+        match lhs.root with
+        | Branch(_, _) -> 
+            match rhs.root with
+            | Branch(_, _) -> crossover lhs rhs selectNode mutate
+            | Leaf(_) -> lhs, rhs
+        | Leaf(_) -> lhs, rhs
+
+    let rec evolve i limit programs =
+        if i = limit then
             programs
         else
-            let fittestPrograms = [ for _ in 1..10 do yield select programs fitness tournamentSize ]
-            
-            // Do crossover and mutation
-            let children = List.map (fun x -> x) fittestPrograms
+            let programsWithFitness = getPopulationWithFitness programs fitness
 
-            evolve (i + 1) last children
+            let children = [ 
+                for _ in 1..populationSize / 2 do 
+                    let lhs = select programsWithFitness tournamentSize
+                    let rhs = select programsWithFitness tournamentSize
+                    let chanceOfLeaf = 10
+                    let selectNode = selectNode chanceOfLeaf rng
+                    let lhs, rhs = crossover lhs rhs selectNode mutate
+                    yield lhs
+                    yield rhs
+            ]
 
-    let program = evolve 0 tournamentSize initialPrograms
+            evolve (i + 1) limit children
+
+    let evolutionIterationLimit = 100
+
+    let program = evolve 0 evolutionIterationLimit initialPrograms
     let result = fitness program.Head
     ignore
-    *)
+    
 main() |> ignore
