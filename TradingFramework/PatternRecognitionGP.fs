@@ -95,7 +95,7 @@ module PatternRecognitionGP =
     let memoizePatternRecognitionComputation () =
         let cache = System.Collections.Generic.Dictionary<System.Func<PatternRecognitionFunction>, _>()
 
-        fun (patternRecogniser: System.Func<PatternRecognitionFunction>) start length high low opening closing ->
+        let lookup patternRecogniser start length high low opening closing =
             let containsValue, containedValues = cache.TryGetValue(patternRecogniser)
 
             if containsValue then 
@@ -104,6 +104,8 @@ module PatternRecognitionGP =
                 let result = patternRecogniser.Invoke() start length high low opening closing
                 cache.[patternRecogniser] <- result
                 result
+
+        lookup
 
     /// Array of Func objects containing the pattern recogniser functions so we can memoize the values the functions compute (function types cannot be compared for equality).
     let patternRecognisers = 
@@ -150,13 +152,13 @@ module PatternRecognitionGP =
         value: int
     }
 
-    let func (arguments: FunctionArguments) (values, endIndex: int) =
-        match (arguments.patternFunc.Invoke()) 0 endIndex values.high values.low values.opening values.closing with
-            | TaLib.Library.Success(value, _, length) -> 
-                if value.Length = 0 then
+    let func (arguments: FunctionArguments) (values, currentRecord: int) =
+        match arguments.patternFunc.Invoke() 0 values.high.Length values.high values.low values.opening values.closing with
+            | TaLib.Library.Success(value, lookbackWindow, length) -> 
+                if value.Length = 0 || currentRecord < lookbackWindow then
                     false
                 else
-                    arguments.operator value.[length - 1] arguments.value
+                    arguments.operator value.[currentRecord - lookbackWindow] arguments.value
             | TaLib.Library.Error(code) -> 
                 failwith ("Error, failed to run pattern recogniser, returned code: " + code.ToString())
 

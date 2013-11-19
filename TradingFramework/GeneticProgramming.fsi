@@ -37,6 +37,8 @@ module GeneticProgramming =
     /// An instance of this type is a program
     type EvaluationTree<'t, 'u> = { root: TreeNode<'t, 'u> }
 
+    val public getPopulationWithFitness<'a, 'b when 'b : comparison> : population:'a list -> fitness:('a -> 'b) -> ('a * 'b) list
+
     /// <summary>
     /// Fitness proportionate selection.
     /// </summary>
@@ -44,6 +46,8 @@ module GeneticProgramming =
     /// <param name="population">Population to select a program from.</param>
     /// <param name="fitness">Fitness function, applied to each program in the population, expected to return an int, the higher the returned value is the more likely it is to be selected.</param>
     val public fitnessProportionalSelection: randomNumberGenerator:(unit -> double) -> population:'a list -> fitness:('a -> decimal) -> 'a
+
+    val public tournamentSelectionPopulationWithFitness<'a, 'b when 'b : comparison> : randomNumberGenerator:(int -> int) -> populationWithFitness:('a * 'b) list -> tournamentSize:int -> 'a
 
     val public tournamentSelection: randomNumberGenerator:(int -> int) -> population:'a list -> fitness:('a -> decimal) -> tournamentSize:int -> 'a
 

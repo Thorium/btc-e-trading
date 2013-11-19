@@ -58,6 +58,8 @@ module PatternRecognitionGP =
         | Sell
         | DoNothing
 
+    val public generateRandomAction: randomNumberGenerator:(int -> int) -> Action
+
     /// <summary>
     /// Moves randomly either up or down by a random number between 0 and diff (inclusive) and kept given the range of minValue..maxValue (inclusive).
     /// </summary>
