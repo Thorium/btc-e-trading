@@ -92,29 +92,26 @@ module PatternRecognitionGP =
 
     type PatternRecognitionFunction = int -> int -> float [] -> float [] -> float [] -> float [] -> TaLib.Library.Result<int [] * int * int>
       
-    let memoizePatternRecognitionComputation () =
-        let cache = System.Collections.Generic.Dictionary<System.Func<PatternRecognitionFunction>, _>()
+    let memoizePatternRecognitionComputation =
+        let cache = System.Collections.Generic.Dictionary<int, TaLib.Library.Result<int [] * int * int>>()
 
-        let lookup patternRecogniser start length high low opening closing =
-            let containsValue, containedValues = cache.TryGetValue(patternRecogniser)
+        let lookup index patternRecogniser start length high low opening closing =
+            let containsValue, containedValues = cache.TryGetValue(index)
 
             if containsValue then 
                 containedValues
             else
-                let result = patternRecogniser.Invoke() start length high low opening closing
-                cache.[patternRecogniser] <- result
+                let result = patternRecogniser start length high low opening closing
+                cache.[index] <- result
                 result
 
         lookup
 
-    /// Array of Func objects containing the pattern recogniser functions so we can memoize the values the functions compute (function types cannot be compared for equality).
     let patternRecognisers = 
         patternRecogniserFunctions |> 
-            Array.map (fun patternRecogniser -> 
-                let container = new System.Func<PatternRecognitionFunction>(fun () -> patternRecogniser)
-
-                new System.Func<PatternRecognitionFunction>(fun () start length high low opening closing -> 
-                    memoizePatternRecognitionComputation() container start length high low opening closing))
+            Array.mapi (fun index patternRecogniser -> 
+                fun start length high low opening closing -> 
+                    memoizePatternRecognitionComputation index patternRecogniser start length high low opening closing)
 
     let operators = [|
         (>)
@@ -147,13 +144,13 @@ module PatternRecognitionGP =
     type Func = OpenHighLowClose * int -> bool
 
     type FunctionArguments = {
-        patternFunc: System.Func<PatternRecognitionFunction>
+        patternFunc: PatternRecognitionFunction
         operator: (int -> int -> bool)
         value: int
     }
 
     let func (arguments: FunctionArguments) (values, currentRecord: int) =
-        match arguments.patternFunc.Invoke() 0 values.high.Length values.high values.low values.opening values.closing with
+        match arguments.patternFunc 0 values.high.Length values.high values.low values.opening values.closing with
             | TaLib.Library.Success(value, lookbackWindow, length) -> 
                 if value.Length = 0 || currentRecord < lookbackWindow then
                     false
