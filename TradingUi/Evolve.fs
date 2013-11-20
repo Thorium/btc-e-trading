@@ -1,10 +1,20 @@
-﻿module TradingUi
-
-open System.Windows
+﻿module Evolve
 
 open TradingFramework.GeneticProgramming
 open TradingFramework.PatternRecognitionGP
 
+let readBacktestingData (backtestingFile: string) interval =
+    let rec readData fileReader = TradingFramework.BackTesting.readHistoricTickerData fileReader
+
+    use sr = new System.IO.StreamReader(backtestingFile)
+    let rec reader () =
+        if not sr.EndOfStream then
+            Some(sr.ReadLine())
+        else
+            None
+
+    readIntervalData reader readData interval
+    
 let copyNodeValue nodeValue data =
     {
         BranchNumber = nodeValue.BranchNumber
@@ -14,23 +24,10 @@ let copyNodeValue nodeValue data =
         Data = data
     }
 
-let testEvolve () =
+let testEvolve values =
     let maxDepth = 3
     let maxNumberOfChildren = 3
     let chanceOfLeaf = 10 // 1 in 3 chance
-
-    let rec readData fileReader = TradingFramework.BackTesting.readHistoricTickerData fileReader
-
-    let interval = 30
-
-    use sr = new System.IO.StreamReader("ticker.txt")
-    let rec reader () =
-        if not sr.EndOfStream then
-            Some(sr.ReadLine())
-        else
-            None
-
-    let values = readIntervalData reader readData interval
 
     let fitness = fitness values
 
@@ -90,8 +87,3 @@ let testEvolve () =
     let program = evolve 0 evolutionIterationLimit initialPrograms
     let result = fitness program.Head
     ()
-
-[<System.STAThreadAttribute>]
-do 
-    async { testEvolve() } |> Async.Start |> ignore
-    Application().Run(Window(Content="Trading app")) |> ignore
