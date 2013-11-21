@@ -17,24 +17,15 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-module TradingUi
+module TargetLabel
 
-open System
-open System.Windows
+open System.Windows.Input
+open System.Windows.Controls
 
-open Window
+type TargetLabel() = class
+    inherit Label()
 
-type TradingApplication = class
-   inherit Application
-   
-   new () = {}
-   
-   override this.OnStartup args =
-      base.OnStartup(args)
-      
-      MainWindow().Show()      
+    override this.OnMouseLeftButtonUp(e) =
+        if e.ClickCount = 1 then
+            Keyboard.Focus(this.Target) |> ignore
 end
-
-[<STAThread>]
-do 
-    TradingApplication().Run() |> ignore

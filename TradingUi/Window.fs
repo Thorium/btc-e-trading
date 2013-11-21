@@ -1,16 +1,31 @@
-﻿module Window
+﻿(*
+    Copyright (C) 2013  Matthew Mcveigh
 
+    This file is part of F# Unaffiliated BTC-E Trading Framework.
+
+    F# Unaffiliated BTC-E Trading Framework is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 3 of the License, or (at your option) any later version.
+
+    F# Unaffiliated BTC-E Trading Framework is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
+*)
+
+module Window
+
+open System
 open System.Windows
 open System.Windows.Input
 open System.Windows.Controls
 
 open Evolve
-
-type Action = delegate of unit -> unit
-
-let runOnUiThread func =
-    let action = Action(fun () -> func())
-    Application.Current.Dispatcher.Invoke(action) |> ignore
+open LoadFileLayout
 
 type Title = class
     inherit Label
@@ -35,56 +50,6 @@ type MainStackPanel = class
         this.Margin <- Thickness(20.0, 10.0, 20.0, 0.0)
 end
 
-let loadData loading loaded _ =
-    let dialog = Microsoft.Win32.OpenFileDialog()
-    let result = dialog.ShowDialog()
-    if result.HasValue && result.Value then
-        async { 
-            runOnUiThread (fun _ -> loading dialog.FileName)
-            let interval = 15
-            let values = readBacktestingData dialog.FileName interval
-            runOnUiThread (fun _ -> loaded dialog.FileName values)
-        } |> Async.Start |> ignore
-        loading dialog.FileName
-
-type LoadFileLayout = class
-    inherit Grid
-
-    new (loadingCallback, loadedCallback)  as this = {} then
-        let rowDefinition = RowDefinition()
-        rowDefinition.Height <- GridLength.Auto
-        this.RowDefinitions.Add(rowDefinition) |> ignore
-
-        // Two columns
-        List.iter (fun _ ->
-            let columnDefinition = ColumnDefinition()
-            columnDefinition.Width <- GridLength.Auto
-            this.ColumnDefinitions.Add(columnDefinition) |> ignore) [0..1]
-
-        let label = Label()
-        this.Children.Add(label) |> ignore
-        Grid.SetRow(label, 1)
-        Grid.SetColumn(label, 1)
-
-        let button = Button()
-        button.Content <- "Load Backtesting File"
-
-        let loading filename =
-            label.Content <- "Loading " + filename
-            button.IsEnabled <- false
-            loadingCallback()
-
-        let loaded filename values = 
-            label.Content <- "Loaded " + filename
-            button.IsEnabled <- true
-            loadedCallback values
-
-        button.Click.Add <| loadData loading loaded
-
-        this.Children.Add(button) |> ignore
-        Grid.SetRow(button, 1)
-end
-
 type MainWindow = class
     inherit Window
    
@@ -101,7 +66,15 @@ type MainWindow = class
         Grid.SetRow(title, 0)
 
         let introduction = Label()
-        introduction.Content <- "Introduction"
+        introduction.Margin <- Thickness(0.0, 0.0, 0.0, 10.0)
+        introduction.Padding <- Thickness(0.0)
+        let labelText = TextBlock()
+        labelText.Text <- "Choose a backtesting file to load. The data from this file will be turned into open high low close data by intervals, an interval of 15 would combine every 15 records from the file into single open high low close records. If the backtesting file fails to load it is in the wrong format."
+        labelText.TextWrapping <- TextWrapping.Wrap
+        labelText.FontFamily <- Media.FontFamily("Times New Roman")
+        labelText.Foreground <- Media.SolidColorBrush(Media.Color.FromRgb(byte(60), byte(60), byte(60)))
+        labelText.FontSize <- 14.0
+        introduction.Content <- labelText
         grid.Children.Add(introduction) |> ignore
         Grid.SetRow(introduction, 1)
 
