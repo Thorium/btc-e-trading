@@ -36,7 +36,7 @@ let runOnUiThread func =
 
 type LoadBacktestingResult =
 | Loaded of TradingFramework.PatternRecognitionGP.OpenHighLowClose
-| FailedToLoad of string
+| FailedToLoad
 
 let getFile () =
     let dialog = Microsoft.Win32.OpenFileDialog()
@@ -46,99 +46,130 @@ let getFile () =
     else
         None
         
-let loadData loading complete _ =
-    let dialog = Microsoft.Win32.OpenFileDialog()
-    let result = dialog.ShowDialog()
-    if result.HasValue && result.Value then
-        async { 
-            runOnUiThread (fun _ -> loading dialog.FileName)
-            let interval = 15
-            let values = try
-                           Loaded(readBacktestingData dialog.FileName interval)
-                         with
-                           | :? _ -> FailedToLoad("")
-            runOnUiThread (fun _ -> complete dialog.FileName values)
-        } |> Async.Start |> ignore
-        loading dialog.FileName
+let loadData filename interval loading complete =
+    async { 
+        runOnUiThread (fun _ -> loading filename)
+        let values = try
+                        Loaded(readBacktestingData filename interval)
+                        with
+                        | :? _ -> FailedToLoad
+        runOnUiThread (fun _ -> complete filename values)
+    } |> Async.Start |> ignore
 
-type LoadFileLayout = class
-    inherit Grid
+type LoadFileLayout(loadingCallback, loadedCallback) as this =
+    inherit Grid()
 
-    new (loadingCallback, loadedCallback)  as this = {} then
-        this.setupGrid()
+    do 
+        let rows, columns = 3, 3
+        List.iter (fun _ ->
+            let columnDefinition = ColumnDefinition()
+            columnDefinition.Width <- GridLength.Auto
+            this.ColumnDefinitions.Add(columnDefinition) |> ignore) [0..columns]
 
-        let label = this.createBacktestingFileTextBox()
+        List.iter (fun _ ->
+            let rowDefinition = RowDefinition()
+            rowDefinition.Height <- GridLength.Auto
+            this.RowDefinitions.Add(rowDefinition) |> ignore) [0..rows]
 
-        let backtestingFileButton = this.createBacktestingFileButton()
+    let fileErrorLabel = Label()
+    do
+        fileErrorLabel.Foreground <- Media.Brushes.Red
+        fileErrorLabel.Content <- "Failed to load file."
+        Grid.SetRow(fileErrorLabel, 2)
+        Grid.SetColumn(fileErrorLabel, 3)
 
-        let getFile _ =
-            match getFile() with
-            | Some(filename) -> label.Text <- filename
-            | None -> ()
+    let showFileErrorLabel() =
+        this.Children.Add(fileErrorLabel) |> ignore
 
-        backtestingFileButton.Click.Add getFile
-        label.PreviewMouseDown.Add getFile
+    let hideFileErrorLabel() =
+        this.Children.Remove(fileErrorLabel)
 
-        let intervalText = this.createIntervalTextbox()
+    let loadBacktestingDataButton = Button()
+    do
+        loadBacktestingDataButton.Content <- "Load Backtesting Data"
+        loadBacktestingDataButton.IsEnabled <- false
+        loadBacktestingDataButton.Margin <- Thickness(0.0, 5.0, 0.0, 5.0)
+        this.Children.Add(loadBacktestingDataButton) |> ignore
+        Grid.SetRow(loadBacktestingDataButton, 3)
+
+    let intervalText = IntegerTextBox(60 * 24)
+    do 
+        intervalText.MinWidth <- 100.0
+        intervalText.Margin <- Thickness(5.0, 5.0, 0.0, 5.0)
+        this.Children.Add(intervalText) |> ignore
+        Grid.SetRow(intervalText, 1)
+        Grid.SetColumn(intervalText, 1)
+
+    let backtestingFileTextbox = TextBox()
+    do
+        backtestingFileTextbox.IsReadOnly <- true
+        backtestingFileTextbox.Margin <- Thickness(5.0, 0.0, 0.0, 5.0)
+        backtestingFileTextbox.MinWidth <- 350.0
+        this.Children.Add(backtestingFileTextbox) |> ignore
+        Grid.SetRow(backtestingFileTextbox, 2)
+        Grid.SetColumn(backtestingFileTextbox, 1)
         
-        let intervalChanged (_, interval) =
-            match interval with
-            | Some(x) when x > 0 -> backtestingFileButton.IsEnabled <- true
-            | _ -> backtestingFileButton.IsEnabled <- false
+    let backtestingFileButton = Button()
+    do
+        backtestingFileButton.Content <- "Backtesting File"
+        backtestingFileButton.Margin <- Thickness(0.0, 0.0, 0.0, 5.0)
+        this.Children.Add(backtestingFileButton) |> ignore
+        Grid.SetRow(backtestingFileButton, 2)
+
+    let disableAll() =
+        backtestingFileButton.IsEnabled <- false
+        backtestingFileTextbox.IsEnabled <- false
+        intervalText.IsEnabled <- false
+
+    let enableAll() =
+        backtestingFileButton.IsEnabled <- true
+        backtestingFileTextbox.IsEnabled <- true
+        intervalText.IsEnabled <- true
+        
+    let intervalChanged (_, interval) =
+        match interval with
+        | Some(x) when x > 0 && backtestingFileTextbox.Text.Length > 0 -> 
+            loadBacktestingDataButton.IsEnabled <- true
+        | _ -> loadBacktestingDataButton.IsEnabled <- false
+
+    let getFile _ =
+        match getFile() with
+        | Some(filename) when intervalText.Text.Length > 0 -> 
+            hideFileErrorLabel()
+            backtestingFileTextbox.Text <- filename
+            loadBacktestingDataButton.IsEnabled <- true
+        | Some(filename) -> 
+            hideFileErrorLabel()
+            backtestingFileTextbox.Text <- filename
+        | None -> ()
+
+    do
+        backtestingFileButton.Click.Add getFile
+
+        let loading _ = 
+            hideFileErrorLabel()
+            disableAll()
+
+        let completed _ = function
+        | Loaded(_) -> ()
+        | FailedToLoad -> 
+            enableAll()
+            showFileErrorLabel()
+            loadBacktestingDataButton.IsEnabled <- true
+
+        loadBacktestingDataButton.Click.Add <| (fun _ -> 
+            loadBacktestingDataButton.IsEnabled <- false
+            loadData backtestingFileTextbox.Text (intervalText.GetInteger()) loading completed)
 
         intervalText.IntegerChanged.Add intervalChanged
 
         this.createIntervalLabel(intervalText)
 
-        this.createLoadBacktestingDataButton()
-
-    member private this.setupGrid() =
-        List.iter (fun _ ->
-            let columnDefinition = ColumnDefinition()
-            columnDefinition.Width <- GridLength.Auto
-            this.ColumnDefinitions.Add(columnDefinition) |> ignore) [0..3]
-
-        List.iter (fun _ ->
-            let rowDefinition = RowDefinition()
-            rowDefinition.Height <- GridLength.Auto
-            this.RowDefinitions.Add(rowDefinition) |> ignore) [0..3]
-
     member private this.createIntervalLabel(target) =
         let intervalLabel = TargetLabel()
         intervalLabel.Content <- "Interval: "
+        intervalLabel.Margin <- Thickness(0.0, 5.0, 0.0, 5.0)
         intervalLabel.Padding <- Thickness(0.0)
         intervalLabel.Target <- target
         this.Children.Add(intervalLabel) |> ignore
         Grid.SetRow(intervalLabel, 1)
-
-    member private this.createIntervalTextbox() : IntegerTextBox =
-        let intervalText = IntegerTextBox(60 * 24)
-        intervalText.MinWidth <- 100.0
-        this.Children.Add(intervalText) |> ignore
-        Grid.SetRow(intervalText, 1)
-        Grid.SetColumn(intervalText, 1)
-        intervalText
-
-    member private this.createBacktestingFileButton() : Button =
-        let button = Button()
-        button.Content <- "Backtesting File"
-        this.Children.Add(button) |> ignore
-        Grid.SetRow(button, 2)
-        button
-
-    member private this.createBacktestingFileTextBox() : TextBox =
-        let label = TextBox()
-        label.IsReadOnly <- true
-        this.Children.Add(label) |> ignore
-        Grid.SetRow(label, 2)
-        Grid.SetColumn(label, 1)
-        label
-
-    member private this.createLoadBacktestingDataButton() =
-        let loadBacktestingDataButton = Button()
-        loadBacktestingDataButton.Content <- "Load Backtesting Data"
-        loadBacktestingDataButton.IsEnabled <- false
-        this.Children.Add(loadBacktestingDataButton) |> ignore
-        Grid.SetRow(loadBacktestingDataButton, 3)
-        Grid.SetColumn(loadBacktestingDataButton, 3)
-end

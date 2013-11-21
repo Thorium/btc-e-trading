@@ -35,9 +35,12 @@ type IntegerTextBox(maxValue) =
     [<CLIEvent>]
     member this.IntegerChanged = integerChanged.Publish
 
+    member public this.GetInteger() =
+        int(this.Text)
+
     override this.OnPreviewKeyDown(e) =
         let key = e.Key
-        let isNotNumber = key <> Key.Back && (key < Key.NumPad0 || key > Key.NumPad9) && (key < Key.D0 || key > Key.D9)
+        let isNotNumber = key <> Key.Back && key <> Key.Delete && (key < Key.NumPad0 || key > Key.NumPad9) && (key < Key.D0 || key > Key.D9)
         let isNotArrowKey = key <> Key.Left && key <> Key.Right
 
         e.Handled <- isNotNumber && isNotArrowKey
