@@ -28,6 +28,8 @@ open System.Windows.Controls
 open TargetLabel
 open Evolve
 
+open TradingFramework.PatternRecognitionGP
+
 type Action = delegate of unit -> unit
 
 let runOnUiThread func =
@@ -35,7 +37,7 @@ let runOnUiThread func =
     Application.Current.Dispatcher.Invoke(action) |> ignore
 
 type LoadBacktestingResult =
-| Loaded of TradingFramework.PatternRecognitionGP.OpenHighLowClose
+| Loaded of OpenHighLowClose
 | FailedToLoad
 
 let getFile () =
@@ -58,6 +60,8 @@ let loadData filename interval loading complete =
 
 type LoadFileLayout(loadingCallback, loadedCallback) as this =
     inherit Grid()
+
+    let loadedFile = Event<OpenHighLowClose>()
 
     do 
         let rows, columns = 3, 3
@@ -151,7 +155,7 @@ type LoadFileLayout(loadingCallback, loadedCallback) as this =
             disableAll()
 
         let completed _ = function
-        | Loaded(_) -> ()
+        | Loaded(values) -> loadedFile.Trigger(values)
         | FailedToLoad -> 
             enableAll()
             showFileErrorLabel()
@@ -164,6 +168,9 @@ type LoadFileLayout(loadingCallback, loadedCallback) as this =
         intervalText.IntegerChanged.Add intervalChanged
 
         this.createIntervalLabel(intervalText)
+
+    [<CLIEvent>]
+    member this.LoadedFile = loadedFile.Publish
 
     member private this.createIntervalLabel(target) =
         let intervalLabel = TargetLabel()

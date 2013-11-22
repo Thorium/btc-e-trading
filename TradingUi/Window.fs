@@ -23,15 +23,39 @@ open System
 open System.Windows
 open System.Windows.Input
 open System.Windows.Controls
+open System.Windows.Forms.Integration
+
+open MSDN.FSharp.Charting.ChartTypes
+open MSDN.FSharp.Charting
 
 open Evolve
 open LoadFileLayout
+
+open TradingFramework.PatternRecognitionGP
+
+let zip4 a (b : _ []) (c : _ []) (d : _ []) =
+    Array.init (Array.length a) (fun i -> a.[i], b.[i], c.[i], d.[i])
+
+let getTickerList highLowOpenClose =
+    zip4 highLowOpenClose.high highLowOpenClose.low highLowOpenClose.opening highLowOpenClose.closing
+        |> Array.toList
+
+let chart highLowOpenClose =
+    let prices = getTickerList highLowOpenClose
+
+    //Chart.Stock(prices) |> ignore
+
+    let chart = FSharpChart.Candlestick(prices)
+
+    new WindowsFormsHost(Child = new ChartControl(chart))
+
+let appName = "Duckmatt BTC-E Trader"
 
 type Title = class
     inherit Label
 
     new () as this = {} then
-        this.Content <- "Duckmatt BTC-E Trader"
+        this.Content <- appName
 
         this.HorizontalAlignment <- HorizontalAlignment.Left
         this.Margin <- Thickness(0.0)
@@ -54,12 +78,12 @@ type MainWindow = class
     inherit Window
    
     new () as this = {} then
-        this.Title <- "Trading Application"
+        this.Title <- appName
 
         this.MinWidth <- 960.0
         this.MinHeight <- 600.0
 
-        let grid = new Grid()
+        let grid = new System.Windows.Controls.Grid()
 
         let title = Title()
         grid.Children.Add(title) |> ignore
@@ -85,11 +109,18 @@ type MainWindow = class
         let loadFileLayout = LoadFileLayout(loading, loaded)
         grid.Children.Add(loadFileLayout) |> ignore
         Grid.SetRow(loadFileLayout, 2)
+
+        loadFileLayout.LoadedFile.Add (fun highLowOpenClose -> 
+            let chart = chart highLowOpenClose
+            grid.Children.Add(chart) |> ignore
+            chart.MinHeight <- 400.0
+            chart.MinWidth <- 500.0
+            Grid.SetRow(chart, 3))
       
         List.iter (fun _ ->
             let rowdef = new RowDefinition()
             rowdef.Height <- GridLength.Auto
-            grid.RowDefinitions.Add(rowdef) |> ignore) [0..2]
+            grid.RowDefinitions.Add(rowdef) |> ignore) [0..4]
 
         let panel = MainStackPanel()
 
