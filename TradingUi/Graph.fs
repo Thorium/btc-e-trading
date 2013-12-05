@@ -19,9 +19,9 @@
  
 module Graph
  
+open System
 open System.Drawing
 open System.Windows.Forms
-open System
  
 let abs (x: float) = System.Math.Abs(x)
  
@@ -79,54 +79,50 @@ let getHighestHighAndLowestLow records =
  
     List.fold getHighestHighAndLowestLow startingValues records
  
-type CoinGraph() as this =
+type CoinGraph(records: (float * float * float * float) list) as this =
     inherit Control()
- 
-    let records = [
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-        (90.0,70.0,90.0,90.0)
-    ]
- 
-    let candlestickWidth = 6
- 
-    let leftMostRecord = 100
+
+    let mutable leftMostRecord = 0
+
+    let candleWidth = 7
+
+    let candleLeftMargin = 1
+
+    let mapRecordNumberToXCoordinate recordNumber =
+        if leftMostRecord < leftMostRecord then
+            None
+        else
+            Some((recordNumber - leftMostRecord) * candleWidth)
 
     let mapValueToYCoordinate value =
         value
  
-    let getCandleStickLine (opening, closing) =
-        Point(103, mapValueToYCoordinate opening), Point(103, mapValueToYCoordinate closing)
+    let getCandleStickLine (opening, closing) x =
+        let x = x + float32(candleWidth / 2)
+        PointF(x, mapValueToYCoordinate opening), PointF(x, mapValueToYCoordinate closing)
  
-    let getCandleStick (high, low) =
-        Rectangle(100, mapValueToYCoordinate high, 7, mapValueToYCoordinate low)
- 
-    let getYPixelHeight height records =
-        let (high, low) = getHighestHighAndLowestLow records
- 
-        System.Math.Abs(high - low) / height
- 
-    let paintCandleStick (graphics:Graphics) (high, low, opening, closing) =
-        use pen = if closing > opening then
-                      new Pen(Color.Green, float32(0.5))
-                  else
-                      new Pen(Color.Red, float32(0.5))
+    let getCandleStick (high, low) x =
+        RectangleF(x, mapValueToYCoordinate high, float32(candleWidth), mapValueToYCoordinate low)
 
-        use brush = new System.Drawing.SolidBrush(System.Drawing.Color.Red)
+    let paintCandleStick (graphics:Graphics) (high: float, low: float, opening: float, closing: float) candlestickNumber =
+        let candleColour = if closing > opening then Color.Green else Color.Red
+
+        use pen = new Pen(candleColour, float32(0.5))
+        use brush = new SolidBrush(candleColour)
+
+        let x = match mapRecordNumberToXCoordinate candlestickNumber with
+                | Some(x) -> float32(x)
+                | None -> failwith "Tried to paint candlestick that should not be displayed."
         
-        let opening, closing = getCandleStickLine (30, 270)
+        let high, low = getCandleStickLine (float32(high), float32(low)) x
 
-        graphics.DrawLine(pen, opening, closing)
+        graphics.DrawLine(pen, high, low)
  
-        graphics.FillRectangle(brush, getCandleStick (high, low))
+        graphics.FillRectangle(brush, getCandleStick (float32(opening), float32(closing)) x)
  
-        ()
+    let paintCandleSticks (graphics:Graphics) =
+        let paintCandleStick = paintCandleStick graphics
+        List.iteri (fun i record -> paintCandleStick record i) records
  
     let mutable lastMouseX = None
     let mutable lastMouseY = None
@@ -167,8 +163,10 @@ type CoinGraph() as this =
  
     let paintYAxis (graphics:Graphics) =
         use font = new Font("Consolas", float32(8))
+
+        let high, low = getHighestHighAndLowestLow records
  
-        let labels = getRoundedValuesBetween 830.0 680.0 [uint16(1);uint16(5)] 10
+        let labels = getRoundedValuesBetween high low [uint16(1);uint16(5)] 10
  
         let paintLabel i label =
             let y = (float32(this.Height) / float32(labels.Length + 1)) * float32(labels.Length - i)
@@ -210,7 +208,7 @@ type CoinGraph() as this =
  
         paintYAxis graphics
 
-        paintCandleStick graphics (100, 70, 100, 70)
+        paintCandleSticks graphics
  
         match lastMouseX, lastMouseY with
         | Some(x), Some(y) -> paintCoordinates graphics (x, y)
