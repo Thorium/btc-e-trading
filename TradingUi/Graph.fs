@@ -86,25 +86,35 @@ type CoinGraph(records: (float * float * float * float) list) as this =
 
     let candleWidth = 7
 
-    let candleLeftMargin = 1
+    let candleLeftMargin = 3
+
+    let mapXCoordinateToRecordNumber x =
+        floor(x / float(candleWidth + candleLeftMargin)) + float(leftMostRecord)
 
     let mapRecordNumberToXCoordinate recordNumber =
         if leftMostRecord < leftMostRecord then
             None
         else
-            Some((recordNumber - leftMostRecord) * candleWidth)
+            Some((recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin))
 
-    let mapValueToYCoordinate value =
-        value
- 
-    let getCandleStickLine (opening, closing) x =
-        let x = x + float32(candleWidth / 2)
-        PointF(x, mapValueToYCoordinate opening), PointF(x, mapValueToYCoordinate closing)
- 
-    let getCandleStick (high, low) x =
-        RectangleF(x, mapValueToYCoordinate high, float32(candleWidth), mapValueToYCoordinate low)
+    let mapValueToYCoordinate value (highestHigh, lowestLow) gap =
+        let pixel = float32(this.Height) / (highestHigh - lowestLow + float32(gap) * float32(2))
+        (highestHigh + gap - value) * pixel
 
-    let paintCandleStick (graphics:Graphics) (high: float, low: float, opening: float, closing: float) candlestickNumber =
+    let mapHeight height (highestHigh, lowestLow) gap =
+        let pixel = float32(this.Height) / (highestHigh - lowestLow + float32(gap) * float32(2))
+        height * pixel
+ 
+    let getCandleStickLine limits (high, low) x gap =
+        let x = x + float32(ceiling(float(candleWidth / 2)))
+        PointF(x, mapValueToYCoordinate high limits gap), PointF(x, mapValueToYCoordinate low limits gap)
+ 
+    let getCandleStick limits (high, low, opening, closing) x gap =
+        let top, bottom = if opening > closing then opening, closing else closing, opening
+
+        RectangleF(x, mapValueToYCoordinate top limits gap, float32(candleWidth), mapHeight (top - bottom) limits gap)
+
+    let paintCandleStick (graphics:Graphics) (high: float, low: float, opening: float, closing: float) candlestickNumber limits gap =
         let candleColour = if closing > opening then Color.Green else Color.Red
 
         use pen = new Pen(candleColour, float32(0.5))
@@ -113,16 +123,18 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         let x = match mapRecordNumberToXCoordinate candlestickNumber with
                 | Some(x) -> float32(x)
                 | None -> failwith "Tried to paint candlestick that should not be displayed."
+
+        let rect = getCandleStick limits (float32(high), float32(low), float32(opening), float32(closing)) x gap
+ 
+        graphics.FillRectangle(brush, rect)
         
-        let high, low = getCandleStickLine (float32(high), float32(low)) x
+        let high, low = getCandleStickLine limits (float32(high), float32(low)) x gap
 
         graphics.DrawLine(pen, high, low)
  
-        graphics.FillRectangle(brush, getCandleStick (float32(opening), float32(closing)) x)
- 
-    let paintCandleSticks (graphics:Graphics) =
+    let paintCandleSticks (graphics:Graphics) (high, low) gap =
         let paintCandleStick = paintCandleStick graphics
-        List.iteri (fun i record -> paintCandleStick record i) records
+        List.iteri (fun i record -> paintCandleStick record i (high, low) gap) records
  
     let mutable lastMouseX = None
     let mutable lastMouseY = None
@@ -161,12 +173,8 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         let lineEnd = PointF(lineStart.X - lineLength, y)
         graphics.DrawLine(pen, lineStart, lineEnd)
  
-    let paintYAxis (graphics:Graphics) =
+    let paintYAxis (graphics:Graphics) (labels: 'a list) =
         use font = new Font("Consolas", float32(8))
-
-        let high, low = getHighestHighAndLowestLow records
- 
-        let labels = getRoundedValuesBetween high low [uint16(1);uint16(5)] 10
  
         let paintLabel i label =
             let y = (float32(this.Height) / float32(labels.Length + 1)) * float32(labels.Length - i)
@@ -205,11 +213,23 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         base.OnPaint event
  
         let graphics = event.Graphics
- 
-        paintYAxis graphics
 
-        paintCandleSticks graphics
+        let high, low = getHighestHighAndLowestLow records
+ 
+        let labels = getRoundedValuesBetween high low [uint16(1);uint16(5)] 10
+ 
+        paintYAxis graphics labels
+
+        let gap = if labels.Length = 1 then 0 else abs(float(labels.Head - labels.Tail.Head)) |> int
+
+        paintCandleSticks graphics (float32(high), float32(low)) <| float32 gap
  
         match lastMouseX, lastMouseY with
-        | Some(x), Some(y) -> paintCoordinates graphics (x, y)
+        | Some(x), Some(y) -> 
+            let x = float(x) |> mapXCoordinateToRecordNumber |> int |> mapRecordNumberToXCoordinate
+            match x with
+            | Some(x) -> 
+                let x = x + int(ceiling(float(candleWidth / 2)))
+                paintCoordinates graphics (x, y)
+            | None -> failwith "Last mouse position was matched up with an invalid record."
         | _ -> ()
