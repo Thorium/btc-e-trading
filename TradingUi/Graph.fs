@@ -157,7 +157,7 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         graphics.DrawLine(pen, startHorizontal, endHorizontal)
         graphics.DrawLine(pen, startVertical, endVertical)
  
-    let paintYAxisLabel (graphics:Graphics) y label font =
+    let paintYAxisLabel (graphics:Graphics) y label font widestLabelWidth =
         let rightMargin = 5
  
         let stringMeasurements = graphics.MeasureString(label, font)
@@ -175,7 +175,7 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         let lineEnd = PointF(lineStart.X - lineLength, y)
         graphics.DrawLine(pen, lineStart, lineEnd)
  
-        let textStart = PointF(lineEnd.X - stringLength - labelPadding, textY)
+        let textStart = PointF(lineEnd.X - widestLabelWidth - labelPadding, textY)
         graphics.DrawString(label, font, new SolidBrush(Color.FromArgb(170, 170, 170)), textStart)
  
         let lineStart = PointF(textStart.X - labelPadding, y)
@@ -184,10 +184,16 @@ type CoinGraph(records: (float * float * float * float) list) as this =
  
     let paintYAxis (graphics:Graphics) (labels: 'a list) =
         use font = new Font("Consolas", float32(8))
+
+        let labels = List.map (fun label -> label.ToString()) labels
+
+        let widestLabelWidth = List.fold (fun width label -> 
+            let currentWidth = graphics.MeasureString(label, font).Width
+            if currentWidth > width then currentWidth else width) (float32(0)) labels
  
         let paintLabel i label =
             let y = (float32(this.Height) / float32(labels.Length + 1)) * float32(labels.Length - i)
-            paintYAxisLabel graphics y label font
+            paintYAxisLabel graphics y label font widestLabelWidth
  
         List.iteri (fun i x -> paintLabel i <| x.ToString()) labels
  
