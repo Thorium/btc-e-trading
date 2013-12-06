@@ -49,7 +49,7 @@ let getRoundedValuesBetween (high: float) low (roundTo: uint16 list) roughNumber
     if roughNumberOfValues <= 0 then raise(new System.ArgumentException("roughNumberOfValues must greater than 0.", "roughNumberOfValues"))
  
     if high = low then
-        [high]
+        [high], high, low
     else
         let heightOfValue = abs(high - low) / float(roughNumberOfValues)
  
@@ -66,8 +66,10 @@ let getRoundedValuesBetween (high: float) low (roundTo: uint16 list) roughNumber
         let highestLabel = closestToRoundTo * floor(high / closestToRoundTo)
  
         let numberOfLabels = abs(highestLabel - lowestLabel) / closestToRoundTo
+
+        let labels = [ for i in 0..int(numberOfLabels) do yield lowestLabel + closestToRoundTo * float(i) ]
  
-        [ for i in 0..int(numberOfLabels) do yield lowestLabel + closestToRoundTo * float(i) ]
+        labels, highestLabel, lowestLabel
  
 let getHighestHighAndLowestLow records =
     let getHighestHighAndLowestLow (currentHigh, currentLow) (high, low, _, _) =
@@ -97,7 +99,7 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         else
             Some((recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin))
 
-    let mapValueToYCoordinate value (highestHigh, lowestLow) gap =
+    let mapValueToYCoordinate (highestHigh, lowestLow) gap value =
         let pixel = float32(this.Height) / (highestHigh - lowestLow + float32(gap) * float32(2))
         (highestHigh + gap - value) * pixel
 
@@ -107,12 +109,19 @@ type CoinGraph(records: (float * float * float * float) list) as this =
  
     let getCandleStickLine limits (high, low) x gap =
         let x = x + float32(ceiling(float(candleWidth / 2)))
-        PointF(x, mapValueToYCoordinate high limits gap), PointF(x, mapValueToYCoordinate low limits gap)
+
+        let mapValueToY = mapValueToYCoordinate limits gap
+
+        PointF(x, mapValueToY high), PointF(x, mapValueToY low)
  
     let getCandleStick limits (high, low, opening, closing) x gap =
         let top, bottom = if opening > closing then opening, closing else closing, opening
 
-        RectangleF(x, mapValueToYCoordinate top limits gap, float32(candleWidth), mapHeight (top - bottom) limits gap)
+        let y = mapValueToYCoordinate limits gap top
+
+        let height = mapHeight (top - bottom) limits gap
+
+        RectangleF(x, y, float32(candleWidth), height)
 
     let paintCandleStick (graphics:Graphics) (high: float, low: float, opening: float, closing: float) candlestickNumber limits gap =
         let candleColour = if closing > opening then Color.Green else Color.Red
@@ -216,13 +225,13 @@ type CoinGraph(records: (float * float * float * float) list) as this =
 
         let high, low = getHighestHighAndLowestLow records
  
-        let labels = getRoundedValuesBetween high low [uint16(1);uint16(5)] 10
+        let (labels: float list), highLabel, lowLabel = getRoundedValuesBetween high low [uint16(1);uint16(5)] 12
  
         paintYAxis graphics labels
 
         let gap = if labels.Length = 1 then 0 else abs(float(labels.Head - labels.Tail.Head)) |> int
 
-        paintCandleSticks graphics (float32(high), float32(low)) <| float32 gap
+        paintCandleSticks graphics (float32(highLabel), float32(lowLabel)) <| float32 gap
  
         match lastMouseX, lastMouseY with
         | Some(x), Some(y) -> 
