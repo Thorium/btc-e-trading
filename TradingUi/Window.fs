@@ -35,7 +35,18 @@ let zip4 a (b : _ []) (c : _ []) (d : _ []) =
  
 let getTickerList highLowOpenClose =
     zip4 highLowOpenClose.high highLowOpenClose.low highLowOpenClose.opening highLowOpenClose.closing
-        |> Array.toList
+
+let readBacktestingData (backtestingFile: string) interval =
+    let rec readData fileReader = TradingFramework.BackTesting.readHistoricTickerData fileReader
+
+    use sr = new System.IO.StreamReader(backtestingFile)
+    let rec reader () =
+        if not sr.EndOfStream then
+            Some(sr.ReadLine())
+        else
+            None
+
+    readIntervalData reader readData interval
  
 open Graph
  
@@ -48,11 +59,7 @@ type MainWindow = class
         this.MinWidth <- 960.0
         this.MinHeight <- 600.0
 
-        let records = [
-            (95.0,66.0,90.0,90.0)
-            (166.0,87.0,145.0,87.0)
-            (128.0,85.0,123.0,125.0)
-        ]
+        let records = getTickerList <| readBacktestingData "ticker.txt" 30
 
         this.Content <- new WindowsFormsHost(Child = new CoinGraph(records))
 end

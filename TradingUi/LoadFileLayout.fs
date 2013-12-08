@@ -54,7 +54,7 @@ let loadData filename interval loading complete =
         let values = try
                         Loaded(readBacktestingData filename interval)
                         with
-                        | :? _ -> FailedToLoad
+                        | _ -> FailedToLoad
         runOnUiThread (fun _ -> complete filename values)
     } |> Async.Start |> ignore
 

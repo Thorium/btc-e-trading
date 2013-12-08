@@ -30,6 +30,10 @@ let log10 (x: float) = System.Math.Log10(x)
 let floor (x: float) = System.Math.Floor(x)
  
 let ceiling (x: float) = System.Math.Ceiling(x)
+
+type Direction =
+| Left
+| Right
  
 /// <summary>
 /// Get a list of values between given high and low values rounded to the nearest round to value.
@@ -62,8 +66,8 @@ let getRoundedValuesBetween (high: float) low (roundTo: uint16 list) roughNumber
  
         let closestToRoundTo = List.minBy (fun x -> abs(heightOfValue - x)) roundTo
  
-        let lowestLabel = closestToRoundTo * ceiling(low / closestToRoundTo)
-        let highestLabel = closestToRoundTo * floor(high / closestToRoundTo)
+        let lowestLabel = closestToRoundTo * floor(low / closestToRoundTo)
+        let highestLabel = closestToRoundTo * ceiling(high / closestToRoundTo)
  
         let numberOfLabels = abs(highestLabel - lowestLabel) / closestToRoundTo
 
@@ -79,9 +83,9 @@ let getHighestHighAndLowestLow records =
  
     let startingValues = System.Double.MinValue, System.Double.MaxValue
  
-    List.fold getHighestHighAndLowestLow startingValues records
+    Array.fold getHighestHighAndLowestLow startingValues records
  
-type CoinGraph(records: (float * float * float * float) list) as this =
+type CoinGraph(records: (float * float * float * float) array) as this =
     inherit Control()
 
     let mutable leftMostRecord = 0
@@ -94,7 +98,7 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         floor(x / float(candleWidth + candleLeftMargin)) + float(leftMostRecord)
 
     let mapRecordNumberToXCoordinate recordNumber =
-        if leftMostRecord < leftMostRecord then
+        if recordNumber < leftMostRecord then
             None
         else
             Some((recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin))
@@ -141,9 +145,9 @@ type CoinGraph(records: (float * float * float * float) list) as this =
 
         graphics.DrawLine(pen, high, low)
  
-    let paintCandleSticks (graphics:Graphics) (high, low) gap =
+    let paintCandleSticks (graphics:Graphics) (high, low) gap records =
         let paintCandleStick = paintCandleStick graphics
-        List.iteri (fun i record -> paintCandleStick record i (high, low) gap) records
+        Array.iteri (fun i record -> paintCandleStick record (i + leftMostRecord) (high, low) gap) records
  
     let mutable lastMouseX = None
     let mutable lastMouseY = None
@@ -196,18 +200,13 @@ type CoinGraph(records: (float * float * float * float) list) as this =
             paintYAxisLabel graphics y label font widestLabelWidth
  
         List.iteri (fun i x -> paintLabel i <| x.ToString()) labels
+
+    let getNumberOfRecordsCanBeDisplayed () =
+        this.Width / (candleWidth + candleLeftMargin)
  
     do
         this.BackColor <- Color.FromArgb(10, 10, 10)
         this.DoubleBuffered <- true
- 
-    override this.OnMouseMove (event:MouseEventArgs) =
-        base.OnMouseMove event
- 
-        lastMouseX <- Some(event.X)
-        lastMouseY <- Some(event.Y)
- 
-        this.Invalidate()
 
     override this.OnMouseEnter event =
         base.OnMouseEnter event
@@ -223,21 +222,65 @@ type CoinGraph(records: (float * float * float * float) list) as this =
         lastMouseY <- None
  
         this.Invalidate()
+
+    member val private MouseDown: (int * int) option = None with get, set
+    member val private RecordWhenMouseDown: int option = None with get, set
+
+    override this.OnMouseDown(event:MouseEventArgs) =
+        base.OnMouseDown event
+        this.RecordWhenMouseDown <- Some(leftMostRecord)
+        this.MouseDown <- Some(event.X, event.Y)
+
+    override this.OnMouseUp(event:MouseEventArgs) =
+        base.OnMouseUp event
+        this.RecordWhenMouseDown <- None
+        this.MouseDown <- None
+
+    member private this.MoveRecords distance direction recordWhenMouseDown =
+        match direction with
+        | Left -> leftMostRecord <- 
+                                    if recordWhenMouseDown + distance / (candleWidth + candleLeftMargin) >= records.Length then records.Length - 1
+                                    else recordWhenMouseDown + distance / (candleWidth + candleLeftMargin)
+        | Right -> leftMostRecord <- 
+                                    if recordWhenMouseDown - distance / (candleWidth + candleLeftMargin) < 0 then 0
+                                    else recordWhenMouseDown - distance / (candleWidth + candleLeftMargin)
+ 
+    override this.OnMouseMove(event:MouseEventArgs) =
+        base.OnMouseMove event
+ 
+        lastMouseX <- Some(event.X)
+        lastMouseY <- Some(event.Y)
+
+        match this.MouseDown, this.RecordWhenMouseDown with
+        | Some(x, _), Some(recordWhenMouseDown) -> 
+            let change = float <| event.X - x
+            let direction = if change >= 0.0 then Right else Left
+            let distance = abs(change)
+            this.MoveRecords (int(distance)) direction recordWhenMouseDown
+        | _ -> ()
+
+        this.Invalidate()
  
     override this.OnPaint (event:PaintEventArgs) =
         base.OnPaint event
  
         let graphics = event.Graphics
 
+        let lastRecord = leftMostRecord + getNumberOfRecordsCanBeDisplayed() - 1
+
+        let lastRecord = if lastRecord >= records.Length then records.Length - 1 else lastRecord
+
+        let records = records.[leftMostRecord..lastRecord]
+
         let high, low = getHighestHighAndLowestLow records
  
-        let (labels: float list), highLabel, lowLabel = getRoundedValuesBetween high low [uint16(1);uint16(5)] 12
- 
-        paintYAxis graphics labels
+        let (labels: float list), highLabel, lowLabel = getRoundedValuesBetween high low [uint16(1);uint16(5)] 10
 
         let gap = if labels.Length = 1 then 0 else abs(float(labels.Head - labels.Tail.Head)) |> int
 
-        paintCandleSticks graphics (float32(highLabel), float32(lowLabel)) <| float32 gap
+        paintCandleSticks graphics (float32 highLabel, float32 lowLabel) (float32 gap) records
+ 
+        paintYAxis graphics labels
  
         match lastMouseX, lastMouseY with
         | Some(x), Some(y) -> 
