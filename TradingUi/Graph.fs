@@ -90,7 +90,7 @@ type CoinGraph(records: (float * float * float * float) array) as this =
 
     let mutable leftMostRecord = 0
 
-    let candleWidth = 7
+    let mutable candleWidth = 7
 
     let candleLeftMargin = 3
 
@@ -230,6 +230,7 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         base.OnMouseDown event
         this.RecordWhenMouseDown <- Some(leftMostRecord)
         this.MouseDown <- Some(event.X, event.Y)
+        this.Focus() |> ignore
 
     override this.OnMouseUp(event:MouseEventArgs) =
         base.OnMouseUp event
@@ -252,7 +253,7 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         lastMouseY <- Some(event.Y)
 
         match this.MouseDown, this.RecordWhenMouseDown with
-        | Some(x, _), Some(recordWhenMouseDown) -> 
+        | Some(x, y), Some(recordWhenMouseDown) when not <| this.AreCoordinatesOutOfBounds (event.X, event.Y) -> 
             let change = float <| event.X - x
             let direction = if change >= 0.0 then Right else Left
             let distance = abs(change)
@@ -260,10 +261,23 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         | _ -> ()
 
         this.Invalidate()
+
+    member this.AreCoordinatesOutOfBounds(x, y) =
+        x < 0 || x > this.Width || y < 0 || y > this.Height
+
+    override this.OnMouseWheel(event:MouseEventArgs) =
+        base.OnMouseWheel event
+
+        let change = if event.Delta > 0 then 1 else -1
+
+        if candleWidth + change > 0 && candleWidth + change < 20 then
+            candleWidth <- candleWidth + change
+
+        this.Invalidate()
  
     override this.OnPaint (event:PaintEventArgs) =
         base.OnPaint event
- 
+
         let graphics = event.Graphics
 
         let lastRecord = leftMostRecord + getNumberOfRecordsCanBeDisplayed() - 1
@@ -274,7 +288,7 @@ type CoinGraph(records: (float * float * float * float) array) as this =
 
         let high, low = getHighestHighAndLowestLow records
  
-        let (labels: float list), highLabel, lowLabel = getRoundedValuesBetween high low [uint16(1);uint16(5)] 10
+        let (labels: float list), highLabel, lowLabel = getRoundedValuesBetween high low [uint16(1);uint16(2);uint16(5)] 10
 
         let gap = if labels.Length = 1 then 0 else abs(float(labels.Head - labels.Tail.Head)) |> int
 
@@ -283,7 +297,7 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         paintYAxis graphics labels
  
         match lastMouseX, lastMouseY with
-        | Some(x), Some(y) -> 
+        | Some(x), Some(y) when not <| this.AreCoordinatesOutOfBounds(x, y) -> 
             let x = float(x) |> mapXCoordinateToRecordNumber |> int |> mapRecordNumberToXCoordinate
             match x with
             | Some(x) -> 
