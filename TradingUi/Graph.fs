@@ -92,16 +92,29 @@ type CoinGraph(records: (float * float * float * float) array) as this =
 
     let mutable candleWidth = 7
 
+    let mutable mouseDown: (int * int) option = None
+    
+    let mutable recordWhenMouseDown: int option = None
+ 
+    let mutable lastMouse: (int * int) option = None
+
+    let mouseMovements = ResizeArray<int * int64>()
+
+    let marginTop = 20
+
+    let marginBottom = 20
+
     let candleLeftMargin = 3
+
+    let runOnUiThread func =
+        let action = Action(fun () -> func())
+        this.Invoke(action) |> ignore
 
     let mapXCoordinateToRecordNumber x =
         floor(x / float(candleWidth + candleLeftMargin)) + float(leftMostRecord)
 
     let mapRecordNumberToXCoordinate recordNumber =
-        if recordNumber < leftMostRecord then
-            None
-        else
-            Some((recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin))
+        (recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin)
 
     let mapValueToYCoordinate (highestHigh, lowestLow) gap value =
         let pixel = float32(this.Height) / (highestHigh - lowestLow + float32(gap) * float32(2))
@@ -133,9 +146,7 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         use pen = new Pen(candleColour, float32(0.5))
         use brush = new SolidBrush(candleColour)
 
-        let x = match mapRecordNumberToXCoordinate candlestickNumber with
-                | Some(x) -> float32(x)
-                | None -> failwith "Tried to paint candlestick that should not be displayed."
+        let x = mapRecordNumberToXCoordinate candlestickNumber |> float32
 
         let rect = getCandleStick limits (float32(high), float32(low), float32(opening), float32(closing)) x gap
  
@@ -148,9 +159,6 @@ type CoinGraph(records: (float * float * float * float) array) as this =
     let paintCandleSticks (graphics:Graphics) (high, low) gap records =
         let paintCandleStick = paintCandleStick graphics
         Array.iteri (fun i record -> paintCandleStick record (i + leftMostRecord) (high, low) gap) records
- 
-    let mutable lastMouseX = None
-    let mutable lastMouseY = None
  
     let paintCoordinates (graphics:Graphics) (lastMouseX, lastMouseY) =
         let startHorizontal, endHorizontal = Point(0, lastMouseY), Point(this.Width, lastMouseY)
@@ -203,6 +211,24 @@ type CoinGraph(records: (float * float * float * float) array) as this =
 
     let getNumberOfRecordsCanBeDisplayed () =
         this.Width / (candleWidth + candleLeftMargin)
+
+    let velocity ((fromX, fromTime: int64), (toX, toTime: int64)) =
+        let changeInX = decimal <| abs(fromX - toX |> float)
+        let changeInTime = decimal  <| abs(fromTime - toTime |> float)
+
+        changeInX / changeInTime
+
+    let direction ((fromX, _), (toX, _)) =
+        if fromX - toX < 0 then Direction.Left else Direction.Right
+
+    let isPreviousVelocityLowerAndSameDirection (mouseMovements: ResizeArray<int * int64>) =
+        if mouseMovements.Count < 4 then
+            false 
+        else
+            let last = mouseMovements.[mouseMovements.Count - 1], mouseMovements.[mouseMovements.Count - 2]
+            let previous = mouseMovements.[mouseMovements.Count - 2], mouseMovements.[mouseMovements.Count - 3]
+
+            velocity last > velocity previous && direction last = direction previous
  
     do
         this.BackColor <- Color.FromArgb(10, 10, 10)
@@ -218,24 +244,34 @@ type CoinGraph(records: (float * float * float * float) array) as this =
 
         Cursor.Show()
 
-        lastMouseX <- None
-        lastMouseY <- None
+        lastMouse <- None
  
         this.Invalidate()
 
-    member val private MouseDown: (int * int) option = None with get, set
-    member val private RecordWhenMouseDown: int option = None with get, set
-
     override this.OnMouseDown(event:MouseEventArgs) =
         base.OnMouseDown event
-        this.RecordWhenMouseDown <- Some(leftMostRecord)
-        this.MouseDown <- Some(event.X, event.Y)
+        recordWhenMouseDown <- Some(leftMostRecord)
+        mouseDown <- Some(event.X, event.Y)
         this.Focus() |> ignore
+
+        Async.CancelDefaultToken()
 
     override this.OnMouseUp(event:MouseEventArgs) =
         base.OnMouseUp event
-        this.RecordWhenMouseDown <- None
-        this.MouseDown <- None
+        recordWhenMouseDown <- None
+        mouseDown <- None
+
+        let kineticScroll = async { 
+            for i in 0..10 do 
+                if leftMostRecord + i < records.Length - 1 then
+                    leftMostRecord <- leftMostRecord + i
+                    runOnUiThread (fun () -> this.Invalidate())
+                    do! Async.Sleep(25)
+        }
+
+        Async.Start kineticScroll |> ignore
+
+        mouseMovements.Clear()
 
     member private this.MoveRecords distance direction recordWhenMouseDown =
         match direction with
@@ -249,10 +285,14 @@ type CoinGraph(records: (float * float * float * float) array) as this =
     override this.OnMouseMove(event:MouseEventArgs) =
         base.OnMouseMove event
  
-        lastMouseX <- Some(event.X)
-        lastMouseY <- Some(event.Y)
+        lastMouse <- Some(event.X, event.Y)
 
-        match this.MouseDown, this.RecordWhenMouseDown with
+        if recordWhenMouseDown <> None then
+            if mouseMovements |> isPreviousVelocityLowerAndSameDirection then
+                mouseMovements.Clear()
+            mouseMovements.Add(event.X, System.DateTime.Now.Ticks)
+
+        match mouseDown, recordWhenMouseDown with
         | Some(x, y), Some(recordWhenMouseDown) when not <| this.AreCoordinatesOutOfBounds (event.X, event.Y) -> 
             let change = float <| event.X - x
             let direction = if change >= 0.0 then Right else Left
@@ -296,12 +336,9 @@ type CoinGraph(records: (float * float * float * float) array) as this =
  
         paintYAxis graphics labels
  
-        match lastMouseX, lastMouseY with
-        | Some(x), Some(y) when not <| this.AreCoordinatesOutOfBounds(x, y) -> 
+        match lastMouse with
+        | Some(x, y) when not <| this.AreCoordinatesOutOfBounds(x, y) -> 
             let x = float(x) |> mapXCoordinateToRecordNumber |> int |> mapRecordNumberToXCoordinate
-            match x with
-            | Some(x) -> 
-                let x = x + int(ceiling(float(candleWidth / 2)))
-                paintCoordinates graphics (x, y)
-            | None -> failwith "Last mouse position was matched up with an invalid record."
+            let x = x + int(ceiling(float(candleWidth / 2)))
+            paintCoordinates graphics (x, y)
         | _ -> ()
