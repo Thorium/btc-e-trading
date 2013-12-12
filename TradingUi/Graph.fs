@@ -24,6 +24,8 @@ open System.Drawing
 open System.Windows.Forms
  
 let abs (x: float) = System.Math.Abs(x)
+
+let absInt (x: int) = System.Math.Abs(x)
  
 let log10 (x: float) = System.Math.Log10(x)
  
@@ -241,6 +243,15 @@ let paintGraph graphics leftMostRecord (records: (float * float * float * float)
         let x = x + int(ceiling(float(candleWidth / 2)))
         paintCoordinates graphics (x, y) (widthOfView, heightOfView)
     | _ -> ()
+
+let max lhs rhs =
+    if lhs > rhs then lhs else rhs
+
+let min lhs rhs =
+    if lhs < rhs then lhs else rhs
+
+let bound minVal value maxVal =
+    max maxVal (min value maxVal)
  
 type CoinGraph(records: (float * float * float * float) array) as this =
     inherit Control()
@@ -252,7 +263,10 @@ type CoinGraph(records: (float * float * float * float) array) as this =
     let mutable lastMouse: (int * int) option = None
     let mutable cancellationToken = new System.Threading.CancellationTokenSource()
 
-    let mouseMovements = ResizeArray<int * int64>()
+    let mouseMovements = System.Collections.Generic.Queue<int * int64>()
+
+    let maxDecelerationSpeed = 30
+    let friction = 1.0
 
     let marginTop = 20
     let marginBottom = 20
@@ -262,8 +276,12 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         let action = Action(fun () -> func())
         this.Invoke(action) |> ignore
 
+    let moveLeft i =
+        leftMostRecord <- leftMostRecord - int(ceil i)
+        runOnUiThread (fun () -> this.Invalidate())
+
     let cancelScrolling = new Event<_>()
- 
+
     do
         this.BackColor <- Color.FromArgb(10, 10, 10)
         this.DoubleBuffered <- true
@@ -286,6 +304,9 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         recordWhenMouseDown <- Some(leftMostRecord)
         mouseDown <- Some(event.X, event.Y)
         this.Focus() |> ignore
+
+        mouseMovements.Clear()
+        mouseMovements.Enqueue(event.X, DateTime.Now.Ticks)
         cancelScrolling.Trigger()
 
     override this.OnMouseUp(event:MouseEventArgs) =
@@ -293,28 +314,58 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         recordWhenMouseDown <- None
         mouseDown <- None
 
-        let mailbox = new MailboxProcessor<string>(fun inbox ->
-            let rec loop i =
+        let velocity (mouseMovements: System.Collections.Generic.Queue<int * int64>) =
+            let firstX, firstTime = mouseMovements.Peek()
+
+            let rec getMouseMovedStats distance time =
+                if mouseMovements.Count > 0 then
+                    let x, time = mouseMovements.Dequeue()
+                    let milliseconds = time / TimeSpan.TicksPerMillisecond - firstTime / TimeSpan.TicksPerMillisecond
+                    getMouseMovedStats (x + (firstX - distance)) milliseconds
+                else
+                    distance, time
+
+            let distance, time = getMouseMovedStats 0 <| int64 0
+
+            let distance, time = float distance, float time
+
+            (abs(distance) / time) * (if distance < 0.0 then -1.0 else 1.0)
+            
+        let kineticScroll = new MailboxProcessor<string>(fun inbox ->
+            let rec loop i timeout velocity moveLeft =
                 async { 
-                    if i < 10 && mouseMovements.Count > 0 then
-                        let! result = inbox.TryReceive 25
+                    let! result = inbox.TryReceive timeout
 
-                        if result.IsSome then
-                            mouseMovements.Clear()
-                            return ()
-                        else if leftMostRecord + i < records.Length - 1 then
-                            leftMostRecord <- leftMostRecord + i
-                            runOnUiThread (fun () -> this.Invalidate())
-                            return! loop <| i + 1
+                    if result.IsSome then
+                        mouseMovements.Clear()
+                    else
+                        let velocity = 
+                            if velocity > 0.0 then 
+                                velocity - friction
+                            else if velocity < 0.0 then
+                                velocity + friction
+                            else
+                                0.0
+
+                        moveLeft velocity
+
+                        if not <| (abs velocity < abs friction) then
+                            return! loop (i + 1) timeout velocity moveLeft
                 } 
-            loop 0)
+            loop 0 25 (velocity mouseMovements) moveLeft)
 
-        mailbox.Start()
+        kineticScroll.Start()
 
-        Event.add (fun _ -> mailbox.Post "dog") cancelScrolling.Publish
+        Event.add (fun _ -> kineticScroll.Post "stop") cancelScrolling.Publish
 
-    member private this.MoveRecords distance direction recordWhenMouseDown =
-        leftMostRecord <- moveRecords distance direction recordWhenMouseDown candleWidth candleLeftMargin records
+    member private this.TryMoveRecords (eventX, eventY) =
+        match mouseDown, recordWhenMouseDown with
+        | Some(x, y), Some(recordWhenMouseDown) when not <| areCoordinatesOutOfBounds (eventX, eventY) (this.Width, this.Height) -> 
+            let change = float <| eventX - x
+            let direction = if change >= 0.0 then Right else Left
+            let distance = int <| abs(change)
+            leftMostRecord <- moveRecords distance direction recordWhenMouseDown candleWidth candleLeftMargin records
+        | _ -> ()
  
     override this.OnMouseMove(event:MouseEventArgs) =
         base.OnMouseMove event
@@ -322,29 +373,29 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         lastMouse <- Some(event.X, event.Y)
 
         if recordWhenMouseDown <> None then
-            if mouseMovements |> isPreviousVelocityLowerAndSameDirection then
-                mouseMovements.Clear()
-            mouseMovements.Add(event.X, System.DateTime.Now.Ticks)
+            let maxMouseMovementsRecorded = 5
+            if mouseMovements.Count > maxMouseMovementsRecorded then
+                mouseMovements.Dequeue() |> ignore
+            mouseMovements.Enqueue(event.X, System.DateTime.Now.Ticks)
 
-        match mouseDown, recordWhenMouseDown with
-        | Some(x, y), Some(recordWhenMouseDown) when not <| areCoordinatesOutOfBounds (event.X, event.Y) (this.Width, this.Height) -> 
-            let change = float <| event.X - x
-            let direction = if change >= 0.0 then Right else Left
-            let distance = abs(change)
-            this.MoveRecords (int(distance)) direction recordWhenMouseDown
-        | _ -> ()
+        this.TryMoveRecords (event.X, event.Y) 
 
         this.Invalidate()
+
+    member this.Zoom delta candleWidth =
+        let change = if delta > 0 then 1 else -1
+        if candleWidth + change > 0 && candleWidth + change < 20 then
+            candleWidth + change
+        else
+            candleWidth
 
     override this.OnMouseWheel(event:MouseEventArgs) =
         base.OnMouseWheel event
 
-        let change = if event.Delta > 0 then 1 else -1
-
-        if candleWidth + change > 0 && candleWidth + change < 20 then
-            candleWidth <- candleWidth + change
-
-        this.Invalidate()
+        let changeInCandleWidth = this.Zoom event.Delta candleWidth
+        if abs(float changeInCandleWidth) > 0.0 then
+            candleWidth <- this.Zoom event.Delta candleWidth
+            this.Invalidate()
  
     override this.OnPaint (event:PaintEventArgs) =
         base.OnPaint event
