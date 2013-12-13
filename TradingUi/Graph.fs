@@ -22,6 +22,48 @@ module Graph
 open System
 open System.Drawing
 open System.Windows.Forms
+open System.Drawing.Drawing2D
+
+let createRoundedRectangle x y width height radius =
+    let xw = x + width
+    let yh = y + height
+    let xwr = xw - radius
+    let yhr = yh - radius
+    let xr = x + radius
+    let yr = y + radius
+    let r2 = radius * 2
+    let xwr2 = xw - r2
+    let yhr2 = yh - r2
+
+    let path = new GraphicsPath()
+    path.StartFigure()
+
+    // Top Left Corner
+    path.AddArc(x, y, r2, r2, 180.0f, 90.0f)
+
+    // Top Edge
+    path.AddLine(xr, y, xwr, y)
+
+    // Top Right Corner
+    path.AddArc(xwr2, y, r2, r2, 270.0f, 90.0f)
+
+    // Right Edge
+    path.AddLine(xw, yr, xw, yhr);
+
+    // Bottom Right Corner
+    path.AddArc(xwr2, yhr2, r2, r2, 0.0f, 90.0f)
+
+    // Bottom Edge
+    path.AddLine(xwr, yh, xr, yh)
+
+    // Bottom Left Corner
+    path.AddArc(x, yhr2, r2, r2, 90.0f, 90.0f)
+
+    // Left Edge
+    path.AddLine(x, yhr, x, yr)
+
+    path.CloseFigure()
+    path
  
 let abs (x: float) = System.Math.Abs(x)
 
@@ -244,6 +286,19 @@ let paintGraph graphics leftMostRecord (records: (float * float * float * float)
         paintCoordinates graphics (x, y) (widthOfView, heightOfView)
     | _ -> ()
 
+let paintScrollBar (graphics:Graphics) (width, height) =
+    graphics.SmoothingMode <- SmoothingMode.AntiAlias
+
+    use rect = createRoundedRectangle 10 (height - 14) (width - 20) 8 5
+    use brush = new SolidBrush(Color.DarkGray)
+    graphics.FillPath(brush, rect)
+
+    use rect = createRoundedRectangle 50 (height - 14) 20 8 5
+    use brush = new SolidBrush(Color.Black)
+    graphics.FillPath(brush, rect)
+
+    graphics.SmoothingMode <- SmoothingMode.Default
+
 let max lhs rhs =
     if lhs > rhs then lhs else rhs
 
@@ -277,7 +332,18 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         this.Invoke(action) |> ignore
 
     let moveLeft i =
-        leftMostRecord <- leftMostRecord - int(ceil i)
+        let i = int(ceil i)
+        let remaining = if leftMostRecord - i < 0 then
+                            let remaining = leftMostRecord - i
+                            leftMostRecord <- 0
+                            remaining
+                        else if leftMostRecord - i > records.Length - 1 then 
+                            let remaining = leftMostRecord - i
+                            leftMostRecord <- records.Length - 1
+                            remaining
+                        else
+                            leftMostRecord <- leftMostRecord - i
+                            0
         runOnUiThread (fun () -> this.Invalidate())
 
     let cancelScrolling = new Event<_>()
@@ -314,49 +380,52 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         recordWhenMouseDown <- None
         mouseDown <- None
 
-        let velocity (mouseMovements: System.Collections.Generic.Queue<int * int64>) =
-            let firstX, firstTime = mouseMovements.Peek()
+        if mouseMovements.Count > 1 then
+            let velocity (mouseMovements: System.Collections.Generic.Queue<int * int64>) =
+                let firstX, firstTime = mouseMovements.Peek()
 
-            let rec getMouseMovedStats distance time =
-                if mouseMovements.Count > 0 then
-                    let x, time = mouseMovements.Dequeue()
-                    let milliseconds = time / TimeSpan.TicksPerMillisecond - firstTime / TimeSpan.TicksPerMillisecond
-                    getMouseMovedStats (x + (firstX - distance)) milliseconds
-                else
-                    distance, time
-
-            let distance, time = getMouseMovedStats 0 <| int64 0
-
-            let distance, time = float distance, float time
-
-            (abs(distance) / time) * (if distance < 0.0 then -1.0 else 1.0)
-            
-        let kineticScroll = new MailboxProcessor<string>(fun inbox ->
-            let rec loop i timeout velocity moveLeft =
-                async { 
-                    let! result = inbox.TryReceive timeout
-
-                    if result.IsSome then
-                        mouseMovements.Clear()
+                let rec getMouseMovedStats distance time =
+                    if mouseMovements.Count > 0 then
+                        let x, time = mouseMovements.Dequeue()
+                        let milliseconds = time / TimeSpan.TicksPerMillisecond - firstTime / TimeSpan.TicksPerMillisecond
+                        getMouseMovedStats (x + (firstX - distance)) milliseconds
                     else
-                        let velocity = 
-                            if velocity > 0.0 then 
-                                velocity - friction
-                            else if velocity < 0.0 then
-                                velocity + friction
-                            else
-                                0.0
+                        distance, time
 
-                        moveLeft velocity
+                let distance, time = getMouseMovedStats 0 <| int64 0
 
-                        if not <| (abs velocity < abs friction) then
-                            return! loop (i + 1) timeout velocity moveLeft
-                } 
-            loop 0 25 (velocity mouseMovements) moveLeft)
+                let distance, time = float distance, float time
 
-        kineticScroll.Start()
+                (abs(distance) / time) * (if distance < 0.0 then -10.0 else 10.0)
+            
+            let kineticScroll = new MailboxProcessor<string>(fun inbox ->
+                let rec loop i timeout velocity moveLeft =
+                    async { 
+                        let! result = inbox.TryReceive timeout
 
-        Event.add (fun _ -> kineticScroll.Post "stop") cancelScrolling.Publish
+                        if result.IsSome then
+                            mouseMovements.Clear()
+                        else
+                            let velocity = 
+                                if velocity > 0.0 then 
+                                    velocity - friction
+                                else if velocity < 0.0 then
+                                    velocity + friction
+                                else
+                                    0.0
+
+                            moveLeft velocity
+                            // if move left returns value
+                            // continue in other direction with bounce friction
+
+                            if not <| (abs velocity < abs friction) then
+                                return! loop (i + 1) timeout velocity moveLeft
+                    } 
+                loop 0 25 (velocity mouseMovements) moveLeft)
+
+            kineticScroll.Start()
+
+            Event.add (fun _ -> kineticScroll.Post "stop") cancelScrolling.Publish
 
     member private this.TryMoveRecords (eventX, eventY) =
         match mouseDown, recordWhenMouseDown with
@@ -401,3 +470,5 @@ type CoinGraph(records: (float * float * float * float) array) as this =
         base.OnPaint event
 
         paintGraph event.Graphics leftMostRecord records (this.Width, this.Height) candleWidth candleLeftMargin lastMouse
+
+        paintScrollBar event.Graphics (this.Width, this.Height)
