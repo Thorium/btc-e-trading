@@ -73,10 +73,14 @@ module Window =
             let records = getTickerList records
 
             let graphControl = new GraphControl(Scrollbar(), HighLowOpenCloseGraph(records))
-            (*
+
             match movingAverage with
-            | TaLib.Library.Success(movingAverage, _, _) -> graphControl.AddGraph(movingAverage)
+            | TaLib.Library.Success(movingAverage, offset, lastRecord) -> 
+                let lineGraph = LineGraph(movingAverage) :> IGraph
+                lineGraph.Offset <- offset
+                lineGraph.LastRecord <- lastRecord - 1
+                graphControl.AddGraph(lineGraph)
             | TaLib.Library.Error(_) -> ()
-            *)
+            
             this.Content <- new WindowsFormsHost(Child = graphControl)
     end

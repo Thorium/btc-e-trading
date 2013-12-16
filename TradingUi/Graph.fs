@@ -33,23 +33,30 @@ module Graph =
             width:int * height:int -> 
             candleWidth:int ->
             candleLeftMargin:int -> 
+            highLabel:float32 * lowLabel:float32 ->
+            gap:float32 ->
             unit
 
         abstract member RecordWidth : unit -> int
 
         abstract member Zoom : int -> unit
 
-        abstract member HighAndLow : unit -> float * float
+        abstract member HighAndLow : leftMostRecord:int -> numberOfRecordsDisplayed:int -> float * float
 
-        abstract member Offset : unit -> int
+        abstract Offset : int with get, set
+
+        abstract LastRecord : int with get, set
 
         abstract member NumberOfRecords : unit -> int
 
     type HighLowOpenClose = (float * float * float * float) array
 
     type HighLowOpenCloseGraph(records:HighLowOpenClose) =
+        let mutable offset = 0
+        let mutable lastRecord = records.Length - 1
+
         interface IGraph with 
-            member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin =
+            member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin (highLabel, lowLabel) gap =
                 let lastRecord = leftMostRecord + (getNumberOfRecordsCanBeDisplayed width candleWidth candleLeftMargin) - 1
 
                 let lastRecord = if lastRecord >= records.Length then records.Length - 1 else lastRecord
@@ -57,14 +64,8 @@ module Graph =
                 let records = records.[leftMostRecord..lastRecord]
 
                 let high, low = getHighestHighAndLowestLow records
- 
-                let (labels: float list), highLabel, lowLabel = getRoundedValuesBetween high low [uint16(1);uint16(2);uint16(5)] 10
 
-                let gap = if labels.Length = 1 then 0 else abs(float(labels.Head - labels.Tail.Head)) |> int
-
-                paintCandleSticks graphics (float32 highLabel, float32 lowLabel) (float32 gap) records candleWidth candleLeftMargin leftMostRecord height
- 
-                paintYAxis graphics labels (width, height)
+                paintCandleSticks graphics (highLabel, lowLabel) gap records candleWidth candleLeftMargin leftMostRecord height
 
             member this.RecordWidth () =
                 7
@@ -72,27 +73,37 @@ module Graph =
             member this.Zoom scale =
                 ()
 
-            member this.HighAndLow () =
-                getHighestHighAndLowestLow records
+            member this.HighAndLow leftMostRecord numberOfRecordsDisplayed =
+                let lastRecord = leftMostRecord + numberOfRecordsDisplayed - 1
+                let lastRecord = if lastRecord >= records.Length then records.Length - 1 else lastRecord
+                getHighestHighAndLowestLow records.[leftMostRecord..lastRecord]
 
-            member this.Offset () =
-                0
+            member this.Offset
+                with get () = offset
+                and set (value) = offset <- value
+
+            member this.LastRecord
+                with get () = lastRecord
+                and set (value) = lastRecord <- value
 
             member this.NumberOfRecords () =
                 records.Length
                 
     type LineGraph(records:float array) =
+        let mutable offset = 0
+        let mutable lastRecord = records.Length - 1
+
         interface IGraph with 
-            member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin =
+            member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin (highLabel, lowLabel) gap =
                 let numberOfRecordsDisplayed = getNumberOfRecordsCanBeDisplayed width candleWidth candleLeftMargin
 
                 let lastRecord = 
-                    if leftMostRecord + numberOfRecordsDisplayed > records.Length - 1 then records.Length - 1
+                    if leftMostRecord + numberOfRecordsDisplayed > lastRecord then lastRecord
                     else leftMostRecord + numberOfRecordsDisplayed
 
                 let points = Array.mapi (fun i value -> 
-                    PointF(float32 (i * (candleWidth + candleLeftMargin)), mapValueToYCoordinate 680 (98.4f, 95.4f) 0.0f (float32 value))) records.[leftMostRecord..lastRecord]
-    
+                    PointF(float32 (i * (candleWidth + candleLeftMargin)), mapValueToYCoordinate height (highLabel, lowLabel) gap (float32 value))) records.[leftMostRecord..lastRecord]
+
                 use pen = new Pen(Color.White, float32(1))
                 graphics.SmoothingMode <- SmoothingMode.AntiAlias
                 graphics.DrawLines(pen, points)
@@ -104,11 +115,26 @@ module Graph =
             member this.Zoom scale =
                 ()
 
-            member this.HighAndLow () =
-                0.0, 100.0
+            member this.HighAndLow leftMostRecord numberOfRecordsDisplayed =
+                let finalRecord = leftMostRecord + numberOfRecordsDisplayed - 1
+                let lastRecord = if finalRecord > lastRecord then lastRecord else finalRecord
 
-            member this.Offset () =
-                0
+                let getHighestHighAndLowestLow (currentHigh, currentLow) value =
+                    let high = if value > currentHigh then value else currentHigh
+                    let low = if value < currentLow then value else currentLow
+                    high, low
+ 
+                let startingValues = System.Double.MinValue, System.Double.MaxValue
+ 
+                Array.fold getHighestHighAndLowestLow startingValues records.[leftMostRecord..lastRecord]
+
+            member this.Offset
+                with get () = offset
+                and set (value) = offset <- value
+
+            member this.LastRecord
+                with get () = lastRecord
+                and set (value) = lastRecord <- value
 
             member this.NumberOfRecords () =
                 records.Length
