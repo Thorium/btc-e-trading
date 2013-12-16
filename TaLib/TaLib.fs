@@ -30,6 +30,8 @@ module Library =
         | Success of 'T
         | Error of Core.RetCode
 
+    type MovingAverage = Core.MAType
+
     let apply func size = 
         let startIndex = ref 0
         let numberOfElements = ref 0
@@ -69,19 +71,17 @@ module Library =
         else
             Error(result)
 
-            (*
     module Overlap =
-
+    (*
         let movingAverageVariablePeriod (high: float []) (low: float []) (closing: float []) (optionalTimePeriod: int) =
             let length = high.Length
             let operation = (fun x1 x2 (x3: float []) x4 x5 x6 x7 x8 x9 x10 -> Core.MovingAverageVariablePeriod(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
             apply (operation 0 (length - 1) high low closing optionalTimePeriod) length
-
-        let movingAverage (high: float []) (low: float []) (closing: float []) (optionalTimePeriod: int) =
-            let length = high.Length
-            let operation = (fun x1 x2 (x3: float []) x4 x5 x6 x7 x8 x9 x10 -> Core.MovingAverage(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
-            apply (operation 0 (length - 1) high low closing optionalTimePeriod) length
-
+            *)
+        let movingAverage (data: float []) (optionalTimePeriod: int) (movingAverageType: Core.MAType) =
+            let operation = (fun x1 x2 (x3: float []) x4 x5 x6 x7 x8 -> Core.MovingAverage(x1,x2,x3,x4,x5,x6,x7,x8))
+            apply (operation 0 (data.Length - 1) data optionalTimePeriod movingAverageType) data.Length
+            (*
         let bbands (high: float []) (low: float []) (closing: float []) (optionalTimePeriod: int) =
             let length = high.Length
             let operation = (fun x1 x2 (x3: float []) x4 x5 x6 x7 x8 x9 x10 -> Core.Bbands(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))

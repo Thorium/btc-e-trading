@@ -59,7 +59,13 @@ type MainWindow = class
         this.MinWidth <- 960.0
         this.MinHeight <- 600.0
 
-        let records = getTickerList <| readBacktestingData "ticker.txt" 30
+        let records = readBacktestingData "ticker.txt" 30
+
+        let simpleMovingAverage = TaLib.Library.MovingAverage.Sma
+
+        let movingAverage = TaLib.Library.Overlap.movingAverage records.low TaLib.Library.taIntegerDefault simpleMovingAverage
+
+        let records = getTickerList records
 
         this.Content <- new WindowsFormsHost(Child = new CoinGraph(records))
 end

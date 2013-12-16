@@ -28,9 +28,14 @@ module Library =
     /// Default float value to use for optional float parameters
     val public taRealDefault: float
 
+    type MovingAverage = Core.MAType
+
     type Result<'T> =
         | Success of 'T
         | Error of Core.RetCode
+
+    module Overlap =
+        val movingAverage: data:float [] -> optionalTimePeriod:int -> movingAverageType:MovingAverage -> Result<float [] * int * int> 
 
     module MomentumIndicator =
         val adx: float [] -> float [] -> float [] -> int -> Result<float [] * int * int>   
