@@ -16,56 +16,67 @@
     You should have received a copy of the GNU Lesser General Public
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
- 
-module Window
- 
-open System
-open System.Windows
-open System.Windows.Input
-open System.Windows.Controls
-open System.Windows.Forms.Integration
- 
-open Evolve
-open LoadFileLayout
- 
-open TradingFramework.PatternRecognitionGP
- 
-let zip4 a (b : _ []) (c : _ []) (d : _ []) =
-    Array.init (Array.length a) (fun i -> a.[i], b.[i], c.[i], d.[i])
- 
-let getTickerList highLowOpenClose =
-    zip4 highLowOpenClose.high highLowOpenClose.low highLowOpenClose.opening highLowOpenClose.closing
 
-let readBacktestingData (backtestingFile: string) interval =
-    let rec readData fileReader = TradingFramework.BackTesting.readHistoricTickerData fileReader
-
-    use sr = new System.IO.StreamReader(backtestingFile)
-    let rec reader () =
-        if not sr.EndOfStream then
-            Some(sr.ReadLine())
-        else
-            None
-
-    readIntervalData reader readData interval
+namespace TradingUi
  
-open Graph
+module Window =
  
-type MainWindow = class
-    inherit Window
+    open System
+    open System.Windows
+    open System.Windows.Input
+    open System.Windows.Controls
+    open System.Windows.Forms.Integration
+ 
+    open Evolve
+    open LoadFileLayout
+ 
+    open TradingUi.GraphControl
+ 
+    open TradingFramework.PatternRecognitionGP
+ 
+    let zip4 a (b : _ []) (c : _ []) (d : _ []) =
+        Array.init (Array.length a) (fun i -> a.[i], b.[i], c.[i], d.[i])
+ 
+    let getTickerList highLowOpenClose =
+        zip4 highLowOpenClose.high highLowOpenClose.low highLowOpenClose.opening highLowOpenClose.closing
+
+    let readBacktestingData (backtestingFile: string) interval =
+        let rec readData fileReader = TradingFramework.BackTesting.readHistoricTickerData fileReader
+
+        use sr = new System.IO.StreamReader(backtestingFile)
+        let rec reader () =
+            if not sr.EndOfStream then
+                Some(sr.ReadLine())
+            else
+                None
+
+        readIntervalData reader readData interval
+
+    open Scrollbar
+    open Graph
+ 
+    type MainWindow = class
+        inherit Window
    
-    new () as this = {} then
-        this.Title <- "Duckmatt BTC-E Trader"
+        new () as this = {} then
+            this.Title <- "Duckmatt BTC-E Trader"
  
-        this.MinWidth <- 960.0
-        this.MinHeight <- 600.0
+            this.MinWidth <- 960.0
+            this.MinHeight <- 600.0
 
-        let records = readBacktestingData "ticker.txt" 30
+            let records = readBacktestingData "ticker.txt" 30
 
-        let simpleMovingAverage = TaLib.Library.MovingAverage.Sma
+            let simpleMovingAverage = TaLib.Library.MovingAverage.Sma
 
-        let movingAverage = TaLib.Library.Overlap.movingAverage records.low TaLib.Library.taIntegerDefault simpleMovingAverage
+            let movingAverage = TaLib.Library.Overlap.movingAverage records.low TaLib.Library.taIntegerDefault simpleMovingAverage
 
-        let records = getTickerList records
+            let records = getTickerList records
 
-        this.Content <- new WindowsFormsHost(Child = new CoinGraph(records))
-end
+            let graphControl = new GraphControl(Scrollbar(), HighLowOpenCloseGraph(records))
+            (*
+            match movingAverage with
+            | TaLib.Library.Success(movingAverage, _, _) -> graphControl.AddGraph(movingAverage)
+            | TaLib.Library.Error(_) -> ()
+            *)
+            this.Content <- new WindowsFormsHost(Child = graphControl)
+    end

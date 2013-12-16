@@ -17,39 +17,41 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-module IntegerTextBox
+namespace TradingUi
 
-open System.Windows
-open System.Windows.Input
-open System.Windows.Controls
+module IntegerTextBox =
 
-/// Text box that only lets the user enter integer up to a given max value.
-type IntegerTextBox(maxValue) =
-    inherit TextBox()
+    open System.Windows
+    open System.Windows.Input
+    open System.Windows.Controls
 
-    let integerChanged = new Event<_>()
+    /// Text box that only lets the user enter integer up to a given max value.
+    type IntegerTextBox(maxValue) =
+        inherit TextBox()
 
-    new(maxValue) as this = IntegerTextBox(maxValue) then
-        DataObject.AddPastingHandler(this, DataObjectPastingEventHandler(fun _ _ -> ()))
+        let integerChanged = new Event<_>()
 
-    [<CLIEvent>]
-    member this.IntegerChanged = integerChanged.Publish
+        new(maxValue) as this = IntegerTextBox(maxValue) then
+            DataObject.AddPastingHandler(this, DataObjectPastingEventHandler(fun _ _ -> ()))
 
-    member public this.GetInteger() =
-        int(this.Text)
+        [<CLIEvent>]
+        member this.IntegerChanged = integerChanged.Publish
 
-    override this.OnPreviewKeyDown(e) =
-        let key = e.Key
-        let isNotNumber = key <> Key.Back && key <> Key.Delete && (key < Key.NumPad0 || key > Key.NumPad9) && (key < Key.D0 || key > Key.D9)
-        let isNotArrowKey = key <> Key.Left && key <> Key.Right
+        member public this.GetInteger() =
+            int(this.Text)
 
-        e.Handled <- isNotNumber && isNotArrowKey
+        override this.OnPreviewKeyDown(e) =
+            let key = e.Key
+            let isNotNumber = key <> Key.Back && key <> Key.Delete && (key < Key.NumPad0 || key > Key.NumPad9) && (key < Key.D0 || key > Key.D9)
+            let isNotArrowKey = key <> Key.Left && key <> Key.Right
 
-    override this.OnPreviewTextInput(e) =
-        e.Handled <- int(this.Text.Insert(this.SelectionStart, e.Text)) > maxValue
+            e.Handled <- isNotNumber && isNotArrowKey
 
-    override this.OnTextChanged(e) =
-        if this.Text.Length > 0 then
-            integerChanged.Trigger(this, Some(int(this.Text)))
-        else
-            integerChanged.Trigger(this, None)
+        override this.OnPreviewTextInput(e) =
+            e.Handled <- int(this.Text.Insert(this.SelectionStart, e.Text)) > maxValue
+
+        override this.OnTextChanged(e) =
+            if this.Text.Length > 0 then
+                integerChanged.Trigger(this, Some(int(this.Text)))
+            else
+                integerChanged.Trigger(this, None)

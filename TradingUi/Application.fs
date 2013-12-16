@@ -17,24 +17,26 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-module TradingUi
+namespace TradingUi
 
-open System
-open System.Windows
+module Application =
 
-open Window
+    open System
+    open System.Windows
 
-type TradingApplication = class
-   inherit Application
+    open Window
+
+    type TradingApplication = class
+       inherit Application
    
-   new () = {}
+       new () = {}
    
-   override this.OnStartup args =
-      base.OnStartup(args)
+       override this.OnStartup args =
+          base.OnStartup(args)
       
-      MainWindow().Show()      
-end
+          MainWindow().Show()      
+    end
 
-[<STAThread>]
-do 
-    TradingApplication().Run() |> ignore
+    [<STAThread>]
+    do 
+        TradingApplication().Run() |> ignore
