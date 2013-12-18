@@ -39,6 +39,8 @@ module Graph =
 
         abstract member RecordWidth : unit -> int
 
+        abstract member RecordMargin : unit -> int
+
         abstract member Zoom : int -> unit
 
         abstract member HighAndLow : leftMostRecord:int -> numberOfRecordsDisplayed:int -> float * float
@@ -54,6 +56,14 @@ module Graph =
     type HighLowOpenCloseGraph(records:HighLowOpenClose) =
         let mutable offset = 0
         let mutable lastRecord = records.Length - 1
+        let mutable recordWidth = 7
+
+        let getHighestHighAndLowestLow (currentHigh, currentLow) (high, low, _, _) =
+            let high = if high > currentHigh then high else currentHigh
+            let low = if low < currentLow then low else currentLow
+            high, low
+
+        let getHighestHighAndLowestLow = foldRecordsToHighLow getHighestHighAndLowestLow
 
         interface IGraph with 
             member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin (highLabel, lowLabel) gap =
@@ -67,15 +77,18 @@ module Graph =
 
                 paintCandleSticks graphics (highLabel, lowLabel) gap records candleWidth candleLeftMargin leftMostRecord height
 
-            member this.RecordWidth () =
-                7
+            member this.RecordWidth () = recordWidth
 
-            member this.Zoom scale =
-                ()
+            member this.RecordMargin () = 3
+
+            member this.Zoom scale = 
+                if recordWidth + scale > 0 && recordWidth + scale < 20 then
+                    recordWidth <- recordWidth + scale
 
             member this.HighAndLow leftMostRecord numberOfRecordsDisplayed =
                 let lastRecord = leftMostRecord + numberOfRecordsDisplayed - 1
                 let lastRecord = if lastRecord >= records.Length then records.Length - 1 else lastRecord
+
                 getHighestHighAndLowestLow records.[leftMostRecord..lastRecord]
 
             member this.Offset
@@ -86,8 +99,7 @@ module Graph =
                 with get () = lastRecord
                 and set (value) = lastRecord <- value
 
-            member this.NumberOfRecords () =
-                records.Length
+            member this.NumberOfRecords () = records.Length
                 
     type LineGraph(records:float array) =
         let mutable offset = 0
@@ -109,11 +121,11 @@ module Graph =
                 graphics.DrawLines(pen, points)
                 graphics.SmoothingMode <- SmoothingMode.Default
 
-            member this.RecordWidth () =
-                1
+            member this.RecordWidth () = 1
 
-            member this.Zoom scale =
-                ()
+            member this.RecordMargin () = 0
+
+            member this.Zoom scale = ()
 
             member this.HighAndLow leftMostRecord numberOfRecordsDisplayed =
                 let finalRecord = leftMostRecord + numberOfRecordsDisplayed - 1
@@ -123,10 +135,8 @@ module Graph =
                     let high = if value > currentHigh then value else currentHigh
                     let low = if value < currentLow then value else currentLow
                     high, low
- 
-                let startingValues = System.Double.MinValue, System.Double.MaxValue
- 
-                Array.fold getHighestHighAndLowestLow startingValues records.[leftMostRecord..lastRecord]
+
+                foldRecordsToHighLow getHighestHighAndLowestLow records.[leftMostRecord..lastRecord]
 
             member this.Offset
                 with get () = offset
@@ -136,5 +146,4 @@ module Graph =
                 with get () = lastRecord
                 and set (value) = lastRecord <- value
 
-            member this.NumberOfRecords () =
-                records.Length
+            member this.NumberOfRecords () = records.Length

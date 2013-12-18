@@ -80,15 +80,10 @@ module GraphFunctions =
  
             labels, highestLabel, lowestLabel
  
-    let getHighestHighAndLowestLow records =
-        let getHighestHighAndLowestLow (currentHigh, currentLow) (high, low, _, _) =
-            let high = if high > currentHigh then high else currentHigh
-            let low = if low < currentLow then low else currentLow
-            high, low
- 
+    let foldRecordsToHighLow folder records =
         let startingValues = System.Double.MinValue, System.Double.MaxValue
  
-        Array.fold getHighestHighAndLowestLow startingValues records
+        Array.fold folder startingValues records
 
     let getNumberOfRecordsCanBeDisplayed widthOfView candleWidth candleLeftMargin =
         widthOfView / (candleWidth + candleLeftMargin)
