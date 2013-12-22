@@ -68,13 +68,23 @@ module Window =
 
             let simpleMovingAverage = TaLib.Library.MovingAverage.Sma
 
-            let movingAverage = TaLib.Library.Overlap.movingAverage records.low TaLib.Library.taIntegerDefault simpleMovingAverage
+            let lowMovingAverage = TaLib.Library.Overlap.movingAverage records.low TaLib.Library.taIntegerDefault simpleMovingAverage
+
+            let highMovingAverage = TaLib.Library.Overlap.movingAverage records.high TaLib.Library.taIntegerDefault simpleMovingAverage
 
             let records = getTickerList records
 
             let graphControl = new GraphControl(Scrollbar(), HighLowOpenCloseGraph(records))
 
-            match movingAverage with
+            match lowMovingAverage with
+            | TaLib.Library.Success(movingAverage, offset, lastRecord) -> 
+                let lineGraph = LineGraph(movingAverage) :> IGraph
+                lineGraph.Offset <- offset
+                lineGraph.LastRecord <- lastRecord - 1
+                graphControl.AddGraph(lineGraph)
+            | TaLib.Library.Error(_) -> ()
+
+            match highMovingAverage with
             | TaLib.Library.Success(movingAverage, offset, lastRecord) -> 
                 let lineGraph = LineGraph(movingAverage) :> IGraph
                 lineGraph.Offset <- offset

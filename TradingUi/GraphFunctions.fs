@@ -85,11 +85,21 @@ module GraphFunctions =
  
         Array.fold folder startingValues records
 
+    let highAndLowFolder (currentHigh, currentLow) value =
+        let high = if value > currentHigh then value else currentHigh
+        let low = if value < currentLow then value else currentLow
+        high, low
+
+    let highAndLowRecordFolder (currentHigh, currentLow) (high, low, _, _) =
+        let high = if high > currentHigh then high else currentHigh
+        let low = if low < currentLow then low else currentLow
+        high, low
+
     let getNumberOfRecordsCanBeDisplayed widthOfView candleWidth candleLeftMargin =
         widthOfView / (candleWidth + candleLeftMargin)
 
     let mapXCoordinateToRecordNumber x candleWidth candleLeftMargin leftMostRecord =
-        floor(x / float(candleWidth + candleLeftMargin)) + float(leftMostRecord)
+        int(floor(x / float(candleWidth + candleLeftMargin))) + leftMostRecord
 
     let mapRecordNumberToXCoordinate recordNumber candleWidth candleLeftMargin leftMostRecord =
         (recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin)
