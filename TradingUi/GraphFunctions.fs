@@ -237,3 +237,14 @@ module GraphFunctions =
             paintYAxisLabel graphics y label font widestLabelWidth widthOfView
  
         List.iteri (fun i x -> paintLabel i <| x.ToString()) labels
+
+    let moveRecords recordWhenMouseDown x leftMostRecordWhenMouseDown candleWidth candleLeftMargin numberOfRecords =
+        let record = mapXCoordinateToRecordNumber x candleWidth candleLeftMargin leftMostRecordWhenMouseDown
+
+        let difference = recordWhenMouseDown - record
+
+        let leftMostRecord = leftMostRecordWhenMouseDown + difference
+
+        if leftMostRecord < 0 then 0
+        else if leftMostRecord >= numberOfRecords then numberOfRecords - 1
+        else leftMostRecord
