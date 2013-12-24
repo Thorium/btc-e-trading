@@ -62,7 +62,7 @@ module Graph =
 
         interface IGraph with 
             member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin (highLabel, lowLabel) gap =
-                if lastRecord > leftMostRecord then
+                if lastRecord >= leftMostRecord then
                     let lastRecord = leftMostRecord + (getNumberOfRecordsCanBeDisplayed width candleWidth candleLeftMargin) - 1
 
                     let lastRecord = if lastRecord >= records.Length then records.Length - 1 else lastRecord
@@ -85,7 +85,7 @@ module Graph =
                 let lastRecord = leftMostRecord + numberOfRecordsDisplayed - 1
                 let lastRecord = if lastRecord >= records.Length then records.Length - 1 else lastRecord
 
-                if lastRecord > leftMostRecord then
+                if lastRecord >= leftMostRecord then
                     Some(getHighestHighAndLowestLow records.[leftMostRecord..lastRecord])
                 else
                     None
@@ -106,7 +106,7 @@ module Graph =
 
         interface IGraph with 
             member this.Draw (graphics:Graphics) leftMostRecord (width, height) candleWidth candleLeftMargin (highLabel, lowLabel) gap =
-                if lastRecord > leftMostRecord then
+                if lastRecord >= leftMostRecord then
                     let numberOfRecordsDisplayed = getNumberOfRecordsCanBeDisplayed width candleWidth candleLeftMargin
 
                     let lastRecord = 
@@ -132,7 +132,7 @@ module Graph =
                 let finalRecord = leftMostRecord + numberOfRecordsDisplayed - 1
                 let lastRecord = if finalRecord > lastRecord then lastRecord else finalRecord
 
-                if lastRecord > leftMostRecord then
+                if lastRecord >= leftMostRecord then
                     Some(foldRecordsToHighLow highAndLowFolder records.[leftMostRecord..lastRecord])
                 else
                     None
