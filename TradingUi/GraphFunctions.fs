@@ -79,7 +79,10 @@ module GraphFunctions =
             let labels = [ for i in 0..int(numberOfLabels) do yield lowestLabel + closestToRoundTo * float(i) ]
  
             labels, highestLabel, lowestLabel
- 
+
+    /// <summary>Folds an array of records to get the highest value and lowest value.</summary>
+    /// <param name="folder">Function used to fold the array.</param>
+    /// <param name="records">Records to get the highest and lowest values from.</param>
     let foldRecordsToHighLow folder records =
         let startingValues = System.Double.MinValue, System.Double.MaxValue
  
@@ -95,14 +98,14 @@ module GraphFunctions =
         let low = if low < currentLow then low else currentLow
         high, low
 
-    let getNumberOfRecordsCanBeDisplayed widthOfView candleWidth candleLeftMargin =
-        widthOfView / (candleWidth + candleLeftMargin)
+    let getNumberOfRecordsCanBeDisplayed widthOfView recordWidth recordLeftMargin =
+        widthOfView / (recordWidth + recordLeftMargin)
 
-    let mapXCoordinateToRecordNumber x candleWidth candleLeftMargin leftMostRecord =
-        int(floor(x / float(candleWidth + candleLeftMargin))) + leftMostRecord
+    let mapXCoordinateToRecordNumber x recordWidth recordLeftMargin leftMostRecord =
+        int(floor(x / float(recordWidth + recordLeftMargin))) + leftMostRecord
 
-    let mapRecordNumberToXCoordinate recordNumber candleWidth candleLeftMargin leftMostRecord =
-        (recordNumber - leftMostRecord) * (candleWidth + candleLeftMargin)
+    let mapRecordNumberToXCoordinate recordNumber recordWidth recordLeftMargin leftMostRecord =
+        (recordNumber - leftMostRecord) * (recordWidth + recordLeftMargin)
 
     let mapValueToYCoordinate heightOfView (highestHigh, lowestLow) gap value =
         let pixel = float32(heightOfView) / (highestHigh - lowestLow + gap * float32(2))
@@ -112,6 +115,12 @@ module GraphFunctions =
         let pixel = float32(heightOfView) / (highestHigh - lowestLow + float32(gap) * float32(2))
         height * pixel
 
+    /// <summary>Creates and returns a rectangle with rounded corners as a path to be used for painting.</summary>
+    /// <param name="x">X axis of the top left corner of the rectangle.</param>
+    /// <param name="y">Y axis of the top left corner of the rectangle.</param>
+    /// <param name="width">Width of the rectangle.</param>
+    /// <param name="height">Height of the rectangle.</param>
+    /// <param name="radius">Radius of the rounded corners.</param>
     let createRoundedRectangle x y width height radius =
         let xw = x + width
         let yh = y + height
@@ -153,41 +162,45 @@ module GraphFunctions =
         path.CloseFigure()
         path
 
-    let getCandleStickLine limits (high, low) x gap candleWidth heightOfView =
+    let getCandleStickLine limits (high, low) x gap candleWidth heightOfView marginTop =
         let x = x + float32(ceiling(float(candleWidth / 2)))
 
         let mapValueToY = mapValueToYCoordinate heightOfView limits gap
 
-        PointF(x, mapValueToY high), PointF(x, mapValueToY low)
+        let highY, lowY = (mapValueToY high) + float32 marginTop, (mapValueToY low) + float32 marginTop
+
+        PointF(x, highY), PointF(x, lowY)
  
-    let getCandleStick limits (high, low, opening, closing) x gap candleWidth heightOfView =
+    let getCandleStick limits (high, low, opening, closing) x gap candleWidth heightOfView marginTop =
         let top, bottom = if opening > closing then opening, closing else closing, opening
 
         let y = mapValueToYCoordinate heightOfView limits gap top
+
+        let y = y + float32 marginTop
 
         let height = mapHeight heightOfView (top - bottom) limits (int gap)
 
         RectangleF(x, y, float32(candleWidth), height)
 
-    let paintCandleStick (graphics:Graphics) (high: float, low: float, opening: float, closing: float) candlestickNumber limits gap candleWidth candleLeftMargin leftMostRecord heightOfView =
+    let paintCandleStick (graphics:Graphics) (high: float, low: float, opening: float, closing: float) candlestickNumber limits gap candleWidth candleLeftMargin leftMostRecord heightOfView marginTop =
         let candleColour = if closing > opening then Color.Green else Color.Red
 
         use pen = new Pen(candleColour, float32(0.5))
         use brush = new SolidBrush(candleColour)
 
         let x = mapRecordNumberToXCoordinate candlestickNumber candleWidth candleLeftMargin leftMostRecord |> float32
-
-        let rect = getCandleStick limits (float32(high), float32(low), float32(opening), float32(closing)) x gap candleWidth heightOfView
+        
+        let rect = getCandleStick limits (float32 high, float32 low, float32 opening, float32 closing) x gap candleWidth heightOfView marginTop
  
         graphics.FillRectangle(brush, rect)
         
-        let high, low = getCandleStickLine limits (float32(high), float32(low)) x gap candleWidth heightOfView
+        let high, low = getCandleStickLine limits (float32(high), float32(low)) x gap candleWidth heightOfView marginTop
 
         graphics.DrawLine(pen, high, low)
  
-    let paintCandleSticks (graphics:Graphics) (high, low) gap records candleWidth candleLeftMargin leftMostRecord heightOfView =
+    let paintCandleSticks (graphics:Graphics) (high, low) gap records candleWidth candleLeftMargin leftMostRecord heightOfView marginTop =
         let paintCandleStick = paintCandleStick graphics
-        Array.iteri (fun i record -> paintCandleStick record (i + leftMostRecord) (high, low) gap candleWidth candleLeftMargin leftMostRecord heightOfView) records
+        Array.iteri (fun i record -> paintCandleStick record (i + leftMostRecord) (high, low) gap candleWidth candleLeftMargin leftMostRecord heightOfView marginTop) records
  
     let paintCoordinates (graphics:Graphics) (lastMouseX, lastMouseY) (widthOfView, heightOfView) =
         let startHorizontal, endHorizontal = Point(0, lastMouseY), Point(widthOfView, lastMouseY)
@@ -198,13 +211,13 @@ module GraphFunctions =
         graphics.DrawLine(pen, startHorizontal, endHorizontal)
         graphics.DrawLine(pen, startVertical, endVertical)
  
-    let paintYAxisLabel (graphics:Graphics) y label font widestLabelWidth widthOfView =
+    let private paintYAxisLabel (graphics:Graphics) y label font widestLabelWidth widthOfView (color:Color) =
         let rightMargin = 5
  
         let stringMeasurements = graphics.MeasureString(label, font)
         let stringLength = stringMeasurements.Width
  
-        use pen = new Pen(Color.FromArgb(170, 170, 170), float32(0.5))
+        use pen = new Pen(color, float32(0.5))
  
         let lineLength = float32(10)
  
@@ -217,24 +230,32 @@ module GraphFunctions =
         graphics.DrawLine(pen, lineStart, lineEnd)
  
         let textStart = PointF(lineEnd.X - widestLabelWidth - labelPadding, textY)
-        graphics.DrawString(label, font, new SolidBrush(Color.FromArgb(170, 170, 170)), textStart)
+        graphics.DrawString(label, font, new SolidBrush(color), textStart)
  
         let lineStart = PointF(textStart.X - labelPadding, y)
         let lineEnd = PointF(lineStart.X - lineLength, y)
         graphics.DrawLine(pen, lineStart, lineEnd)
+
+    exception ViewSizeException of string
  
-    let paintYAxis (graphics:Graphics) (labels: 'a list) (widthOfView, heightOfView) =
-        use font = new Font("Consolas", float32(8))
-
-        let labels = List.map (fun label -> label.ToString()) labels
-
+    /// <summary>Paints the given labels evenly spaced apart along the y axis.</summary>
+    /// <param name="graphics">Graphics object used to paint the labels to the view.</param>
+    /// <param name="labels">Labels to paint.</param>
+    /// <param name="(widthOfView, heightOfView)">Width and height of the view the labels are to be painted to.</param>
+    /// <param name="font">Font used to display the labels.</param>
+    /// <exception cref="ViewSizeException">Thrown when the width of the largest label is greater than the width of the view.</exception>
+    let paintYAxis (graphics:Graphics) (labels: 'a list) (widthOfView, heightOfView) font color marginTop =
         let widestLabelWidth = List.fold (fun width label -> 
-            let currentWidth = graphics.MeasureString(label, font).Width
-            if currentWidth > width then currentWidth else width) (float32(0)) labels
+            let currentWidth = graphics.MeasureString(label.ToString(), font).Width
+            if currentWidth > width then currentWidth else width) 0.0f labels
+
+        if widestLabelWidth > float32 widthOfView then
+            raise <| ViewSizeException "Label wider than view."
  
         let paintLabel i label =
             let y = (float32(heightOfView) / float32(labels.Length + 1)) * float32(labels.Length - i)
-            paintYAxisLabel graphics y label font widestLabelWidth widthOfView
+            let y = y + float32 marginTop
+            paintYAxisLabel graphics y label font widestLabelWidth widthOfView color
  
         List.iteri (fun i x -> paintLabel i <| x.ToString()) labels
 
