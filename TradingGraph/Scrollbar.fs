@@ -17,42 +17,16 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-namespace TradingUi
- 
+namespace TradingGraph
+
 module Scrollbar =
+
+    open IScrollbar
+    open GraphFunctions
 
     open System
     open System.Drawing
     open System.Drawing.Drawing2D
-
-    open GraphFunctions
-
-    type ScrollbarMovedDelegate = delegate of obj * EventArgs -> unit
-
-    type IScrollbar =
-       abstract member Draw : 
-            graphics:Graphics -> 
-            leftMostRecord:int ->
-            numberOfRecords:int ->
-            width:int * height:int -> 
-            candleWidth:int ->
-            candleLeftMargin:int ->
-            unit
-
-        abstract member ViewMoved : x:int -> unit
-
-        abstract member MouseDown : unit -> unit
-
-        abstract member MouseMove : unit -> unit
-
-        abstract member MouseUp : unit -> unit
-
-        abstract member ScrollerBoundingBox : unit -> RectangleF
-
-        abstract member ScrollbarBoundingBox : unit -> RectangleF
-
-        [<CLIEvent>]
-        abstract member ScrollbarMovedEvent : IEvent<ScrollbarMovedDelegate, EventArgs>
 
     type Scrollbar() =
         let scrollbarMovedEvent = new Event<ScrollbarMovedDelegate, EventArgs>()

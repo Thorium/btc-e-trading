@@ -17,13 +17,12 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-namespace TradingUi
+namespace TradingGraph
 
 module GraphFunctions =
 
     open System
     open System.Drawing
-    open System.Windows.Forms
     open System.Drawing.Drawing2D
 
     let abs (x: float) = System.Math.Abs(x)

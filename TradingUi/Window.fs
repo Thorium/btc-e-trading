@@ -30,7 +30,7 @@ module Window =
     open Evolve
     open LoadFileLayout
  
-    open TradingUi.GraphControl
+    open TradingGraph.GraphControl
  
     open TradingFramework.PatternRecognitionGP
  
@@ -52,8 +52,12 @@ module Window =
 
         readIntervalData reader readData interval
 
-    open Scrollbar
-    open Graph
+    open TradingGraph.Scrollbar
+    open TradingGraph.IGraph
+    open TradingGraph.LineGraph
+    open TradingGraph.CandleStickGraph
+    open TradingGraph.IMovementListener
+    open TradingGraph.KineticScroller
  
     type MainWindow = class
         inherit Window
@@ -75,6 +79,8 @@ module Window =
             let records = getTickerList records
 
             let graphControl = new GraphControl(Scrollbar(), HighLowOpenCloseGraph(records))
+
+            graphControl.AddMovementListener <| KineticScroller()
 
             match lowMovingAverage with
             | TaLib.Library.Success(movingAverage, offset, lastRecord) -> 

@@ -17,19 +17,37 @@
     License along with F# Unaffiliated BTC-E Trading Framework. If not, see <http://www.gnu.org/licenses/>.
 *)
 
-namespace TradingUi
- 
-module CrossHair =
+namespace TradingGraph
 
+module IScrollbar =
+
+    open System
     open System.Drawing
+    open System.Drawing.Drawing2D
 
-    type ICrossHair =
-       abstract member Draw : 
+    type ScrollbarMovedDelegate = delegate of obj * EventArgs -> unit
+
+    type IScrollbar =
+        abstract member Draw : 
             graphics:Graphics -> 
             leftMostRecord:int ->
-            records:(float * float * float * float) array ->
-            viewMeasurements:(int * int) -> 
+            numberOfRecords:int ->
+            width:int * height:int -> 
             candleWidth:int ->
             candleLeftMargin:int ->
-            lastMouse:int -> 
             unit
+
+        abstract member ViewMoved : x:int -> unit
+
+        abstract member MouseDown : unit -> unit
+
+        abstract member MouseMove : unit -> unit
+
+        abstract member MouseUp : unit -> unit
+
+        abstract member ScrollerBoundingBox : unit -> RectangleF
+
+        abstract member ScrollbarBoundingBox : unit -> RectangleF
+
+        [<CLIEvent>]
+        abstract member ScrollbarMovedEvent : IEvent<ScrollbarMovedDelegate, EventArgs>
