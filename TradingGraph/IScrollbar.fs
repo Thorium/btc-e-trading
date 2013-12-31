@@ -25,8 +25,6 @@ module IScrollbar =
     open System.Drawing
     open System.Drawing.Drawing2D
 
-    type ScrollbarMovedDelegate = delegate of obj * EventArgs -> unit
-
     type IScrollbar =
         abstract member Draw : 
             graphics:Graphics -> 
@@ -37,17 +35,11 @@ module IScrollbar =
             candleLeftMargin:int ->
             unit
 
-        abstract member ViewMoved : x:int -> unit
+        abstract member ViewMoved : leftMostRecord:int -> unit
 
         abstract member MouseDown : unit -> unit
 
-        abstract member MouseMove : unit -> unit
-
         abstract member MouseUp : unit -> unit
 
-        abstract member ScrollerBoundingBox : unit -> RectangleF
-
-        abstract member ScrollbarBoundingBox : unit -> RectangleF
-
         [<CLIEvent>]
-        abstract member ScrollbarMovedEvent : IEvent<ScrollbarMovedDelegate, EventArgs>
+        abstract member RedrawEvent : IEvent<unit>

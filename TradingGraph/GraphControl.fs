@@ -78,21 +78,32 @@ module GraphControl =
             let action = Action(fun () -> func())
             this.Invoke(action) |> ignore
 
+        let moveTo newLeftMostRecord =
+            leftMostRecord <- newLeftMostRecord
+
+            scrollbar.ViewMoved leftMostRecord
+
+            runOnUiThread (fun () -> this.Invalidate())
+
         let moveLeft i =
             let numberOfRecords = getNumberOfRecords graphs
 
-            if leftMostRecord - i < 0 then
-                leftMostRecord <- 0
-            else if leftMostRecord - i > numberOfRecords - 1 then 
-                leftMostRecord <- numberOfRecords - 1
-            else
-                leftMostRecord <- leftMostRecord - i
-            runOnUiThread (fun () -> this.Invalidate())
+            let leftMostRecord = 
+                if leftMostRecord - i < 0 then
+                    0
+                else if leftMostRecord - i > numberOfRecords - 1 then 
+                    numberOfRecords - 1
+                else
+                    leftMostRecord - i
+
+            moveTo leftMostRecord
 
         do
             this.BackColor <- Color.FromArgb(10, 10, 10)
             this.DoubleBuffered <- true
             graphs.Add(graph)
+            scrollbar.RedrawEvent.Add (fun () -> 
+                runOnUiThread (fun () -> this.Invalidate()))
 
         member this.AddGraph graph =
             graphs.Add graph
@@ -123,11 +134,15 @@ module GraphControl =
             mouseDown <- Some(event.X, event.Y, leftMostRecord, recordNumber)
             this.Focus() |> ignore
 
+            scrollbar.MouseDown()
+
             movementListeners.ForEach (fun x -> x.OnMouseDown event)
 
         override this.OnMouseUp(event:MouseEventArgs) =
             base.OnMouseUp event
             mouseDown <- None
+
+            scrollbar.MouseUp()
 
             movementListeners.ForEach (fun x -> x.OnMouseUp event)
 
@@ -139,7 +154,7 @@ module GraphControl =
             | Some(x, y, leftMostRecordWhenMouseDown, recordWhenMouseDown) when not <| areCoordinatesOutOfBounds (eventX, eventY) (this.Width, this.Height) -> 
                 let numberOfRecords = getNumberOfRecords graphs
                 let x = float eventX
-                leftMostRecord <- moveRecords recordWhenMouseDown x leftMostRecordWhenMouseDown recordWidth recordMargin numberOfRecords
+                moveTo <| moveRecords recordWhenMouseDown x leftMostRecordWhenMouseDown recordWidth recordMargin numberOfRecords
             | _ -> ()
 
         override this.OnMouseMove(event:MouseEventArgs) =

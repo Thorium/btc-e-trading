@@ -27,57 +27,118 @@ module Scrollbar =
     open System
     open System.Drawing
     open System.Drawing.Drawing2D
+    open System.Threading
 
+    /// Scrollbar that shows movement, fades in on the start of movement and fades out at the end of movement.
+    /// The scrollbar can only be viewed by the user kind of "read-only".
     type Scrollbar() =
-        let scrollbarMovedEvent = new Event<ScrollbarMovedDelegate, EventArgs>()
+        let redrawEvent = Event<unit>()
 
+        let mutable fadingIn, fadingOut, displayed = None, None, false
+
+        let mutable isMoving, isMouseDown = false, false
+
+        let rec fade alpha func until pause apply =
+            async {
+                if until alpha then
+                    apply alpha
+                    do! Async.Sleep(pause)
+                    fade (func alpha) func until pause apply
+            } |> Async.StartImmediate
+
+        let fadeOut () =
+            let until x =
+                let isFinished = x <= 0
+                if isFinished then
+                    fadingOut <- None
+                    displayed <- false
+                not isFinished
+            async { fade 255 (fun x -> redrawEvent.Trigger(); x - 40) until 25 (fun x -> fadingOut <- Some(x)) } |> Async.StartImmediate
+
+        let fadeIn () = 
+            displayed <- true
+            let until x =
+                let isFinished = x > 255
+                if isFinished then
+                    fadingIn <- None
+                not isFinished
+            async { fade 0 (fun x -> redrawEvent.Trigger(); x + 40) until 25 (fun x -> fadingIn <- Some(x)) } |> Async.StartImmediate
+
+        let scrollerColor () =
+            match fadingIn, fadingOut with
+            | Some(alpha), None -> Color.FromArgb(alpha, Color.DarkGray)
+            | None, Some(alpha) -> Color.FromArgb(alpha, Color.DarkGray)
+            | None, None -> Color.DarkGray
+            | _ -> failwith "Attempting to fade in and fade out at the same time."
+
+        let checkMovement = new MailboxProcessor<string>(fun inbox ->
+            let rec loop timeout =
+                async { 
+                    let! result = 
+                        if isMoving then
+                            inbox.TryReceive timeout
+                        else
+                            inbox.TryReceive ()
+
+                    match result with
+                    | Some(message) when message.Equals("viewmoved") -> 
+                        isMoving <- true
+                    | _ when not isMouseDown -> 
+                        fadeOut()
+                        isMoving <- false
+                    | _ -> ()
+                        
+                    do! loop timeout
+                } 
+            loop 75)
+
+        do
+            checkMovement.Start()
+            
         interface IScrollbar with 
             member this.Draw (graphics:Graphics) leftMostRecord numberOfRecords (width, height) candleWidth candleLeftMargin =
-                graphics.SmoothingMode <- SmoothingMode.AntiAlias
+                if displayed then
 
-                let numberOfRecordsDisplayed = getNumberOfRecordsCanBeDisplayed width candleWidth candleLeftMargin
+                    let numberOfRecordsDisplayed = getNumberOfRecordsCanBeDisplayed width candleWidth candleLeftMargin
 
-                let totalRecordsCanBeDisplayed = numberOfRecords + numberOfRecordsDisplayed - 1
+                    let totalRecordsCanBeDisplayed = numberOfRecords + numberOfRecordsDisplayed - 1
 
-                let totalWidth = (candleWidth + candleLeftMargin) * totalRecordsCanBeDisplayed
+                    let totalWidth = (candleWidth + candleLeftMargin) * totalRecordsCanBeDisplayed
 
-                let ratio = float width / float totalWidth
+                    let ratio = float width / float totalWidth
 
-                let scrollbarWidth = width - 20
+                    let scrollbarWidth = width
 
-                let r = float scrollbarWidth / float totalRecordsCanBeDisplayed
+                    let r = float scrollbarWidth / float totalRecordsCanBeDisplayed
 
-                let scrollerWidth = int (float scrollbarWidth * ratio)
+                    let scrollerWidth = int (float scrollbarWidth * ratio)
 
-                let leftMostRecord = int (float leftMostRecord * r)
+                    let leftMostRecord = int (float leftMostRecord * r)
 
-                use rect = createRoundedRectangle 10 (height - 14) scrollbarWidth 8 5
-                use brush = new SolidBrush(Color.DarkGray)
-                graphics.FillPath(brush, rect)
+                    let rect = Rectangle(0, height - 4, scrollbarWidth, 4)
+                    use brush = new SolidBrush(Color.Black)
+                    graphics.FillRectangle(brush, rect)
 
-                use rect = createRoundedRectangle (leftMostRecord + 10) (height - 14) scrollerWidth 8 5
-                use brush = new SolidBrush(Color.Black)
-                graphics.FillPath(brush, rect)
+                    graphics.SmoothingMode <- SmoothingMode.AntiAlias
 
-                graphics.SmoothingMode <- SmoothingMode.Default
+                    use rect = createRoundedRectangle leftMostRecord (height - 4) scrollerWidth 4 2
+                    use brush = new SolidBrush(scrollerColor())
+                    graphics.FillPath(brush, rect)
 
-            member this.ViewMoved x =
-                ()
+                    graphics.SmoothingMode <- SmoothingMode.Default
 
-            member this.MouseDown () =
-                ()
+            member this.ViewMoved leftMostRecord = 
+                if not displayed then
+                    fadeIn()
 
-            member this.MouseMove () =
-                ()
+                checkMovement.Post "viewmoved"
 
-            member this.MouseUp () =
-                ()
+            member this.MouseDown () = isMouseDown <- true
 
-            member this.ScrollerBoundingBox () =
-                RectangleF(10.0f,10.0f,10.0f,10.0f)
-
-            member this.ScrollbarBoundingBox () =
-                RectangleF(10.0f,10.0f,10.0f,10.0f)
+            member this.MouseUp () = 
+                isMouseDown <- false
+                if not isMoving then
+                    fadeOut()
 
             [<CLIEvent>]
-            member this.ScrollbarMovedEvent = scrollbarMovedEvent.Publish
+            member this.RedrawEvent = redrawEvent.Publish

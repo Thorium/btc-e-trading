@@ -21,8 +21,7 @@ module TestPatternRecognitionGP
 
 open NUnit.Framework
 
-open TradingUi.Graph
-open TradingUi.GraphFunctions
+open TradingGraph.GraphFunctions
 
 [<TestFixture>]
 type TestGraph() = class
