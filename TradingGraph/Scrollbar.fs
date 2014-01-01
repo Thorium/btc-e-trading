@@ -25,51 +25,65 @@ module Scrollbar =
     open GraphFunctions
 
     open System
+    open System.Collections.Concurrent
     open System.Drawing
     open System.Drawing.Drawing2D
     open System.Threading
+
+    type Fading =
+    | In
+    | Out
+    | None
 
     /// Scrollbar that shows movement, fades in on the start of movement and fades out at the end of movement.
     /// The scrollbar can only be viewed by the user kind of "read-only".
     type Scrollbar() =
         let redrawEvent = Event<unit>()
 
-        let mutable fadingIn, fadingOut, displayed = None, None, false
+        let mutable isMoving, isMouseDown, displayed = false, false, false
 
-        let mutable isMoving, isMouseDown = false, false
+        let mutable alpha = 0
 
-        let rec fade alpha func until pause apply =
-            async {
-                if until alpha then
-                    apply alpha
-                    do! Async.Sleep(pause)
-                    fade (func alpha) func until pause apply
-            } |> Async.StartImmediate
+        let fader = new MailboxProcessor<string>(fun inbox ->
+            let rec loop timeout fading =
+                async { 
+                    let fading = match fading with
+                    | In -> 
+                        let r = if alpha + 40 >= 255 then
+                                    alpha <- 255
+                                    None
+                                else
+                                    alpha <- alpha + 40
+                                    In
+                        redrawEvent.Trigger()
+                        r
+                    | Out -> 
+                        let r = if alpha - 40 <= 0 then
+                                    alpha <- 0
+                                    displayed <- false
+                                    None
+                                else
+                                    alpha <- alpha - 40
+                                    Out
+                        redrawEvent.Trigger()
+                        r
+                    | None -> None
+                    
+                    let! result = 
+                        match fading with
+                        | None -> inbox.TryReceive ()
+                        | _ -> inbox.TryReceive timeout
 
-        let fadeOut () =
-            let until x =
-                let isFinished = x <= 0
-                if isFinished then
-                    fadingOut <- None
-                    displayed <- false
-                not isFinished
-            async { fade 255 (fun x -> redrawEvent.Trigger(); x - 40) until 25 (fun x -> fadingOut <- Some(x)) } |> Async.StartImmediate
-
-        let fadeIn () = 
-            displayed <- true
-            let until x =
-                let isFinished = x > 255
-                if isFinished then
-                    fadingIn <- None
-                not isFinished
-            async { fade 0 (fun x -> redrawEvent.Trigger(); x + 40) until 25 (fun x -> fadingIn <- Some(x)) } |> Async.StartImmediate
-
-        let scrollerColor () =
-            match fadingIn, fadingOut with
-            | Some(alpha), None -> Color.FromArgb(alpha, Color.DarkGray)
-            | None, Some(alpha) -> Color.FromArgb(alpha, Color.DarkGray)
-            | None, None -> Color.DarkGray
-            | _ -> failwith "Attempting to fade in and fade out at the same time."
+                    match result with
+                    | Some("fadeIn") -> 
+                        displayed <- true
+                        do! loop timeout Fading.In
+                    | Some("fadeOut") -> 
+                        do! loop timeout Fading.Out
+                    | _ ->  
+                        do! loop timeout fading
+                } 
+            loop 30 None)
 
         let checkMovement = new MailboxProcessor<string>(fun inbox ->
             let rec loop timeout =
@@ -84,7 +98,7 @@ module Scrollbar =
                     | Some(message) when message.Equals("viewmoved") -> 
                         isMoving <- true
                     | _ when not isMouseDown -> 
-                        fadeOut()
+                        fader.Post "fadeOut"
                         isMoving <- false
                     | _ -> ()
                         
@@ -94,6 +108,7 @@ module Scrollbar =
 
         do
             checkMovement.Start()
+            fader.Start()
             
         interface IScrollbar with 
             member this.Draw (graphics:Graphics) leftMostRecord numberOfRecords (width, height) candleWidth candleLeftMargin =
@@ -122,14 +137,14 @@ module Scrollbar =
                     graphics.SmoothingMode <- SmoothingMode.AntiAlias
 
                     use rect = createRoundedRectangle leftMostRecord (height - 4) scrollerWidth 4 2
-                    use brush = new SolidBrush(scrollerColor())
+                    use brush = new SolidBrush(Color.FromArgb(alpha, Color.DarkGray))
                     graphics.FillPath(brush, rect)
 
                     graphics.SmoothingMode <- SmoothingMode.Default
 
             member this.ViewMoved leftMostRecord = 
                 if not displayed then
-                    fadeIn()
+                    fader.Post "fadeIn"
 
                 checkMovement.Post "viewmoved"
 
@@ -138,7 +153,7 @@ module Scrollbar =
             member this.MouseUp () = 
                 isMouseDown <- false
                 if not isMoving then
-                    fadeOut()
+                    fader.Post "fadeOut"
 
             [<CLIEvent>]
             member this.RedrawEvent = redrawEvent.Publish
