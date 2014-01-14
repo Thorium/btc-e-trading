@@ -80,7 +80,7 @@ module PublicBtceApi =
 
     val public getDepth: Pair list -> (Pair * Depth) list
 
-    //val public getDepthWithLimit: Pair list -> int -> (Pair * Depth) list
+    val public getDepthWithLimit: Pair list -> int -> (Pair * Depth) list
 
     val public getRecentTradesWithCustomDownloader: (string -> string) -> Pair list -> (Pair * (RecentTrade list)) list
 

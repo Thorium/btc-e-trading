@@ -152,6 +152,18 @@ module PublicBtceApi =
         let client = new WebClient()
         getDepthWithCustomDownloader client.DownloadString pairs
 
+    let getDepthWithCustomDownloaderLimit (customDownloader: string -> string) (pairs: Pair list) limit : (Pair * Depth) list =
+        let response = customDownloader("https://btc-e.com/api/3/depth/" + getParameters(pairs) + "?limit=" + limit.ToString())
+        let jsonObject = Newtonsoft.Json.Linq.JObject.Parse(response)
+        [ for child in jsonObject do 
+                let childProperty: Linq.JProperty = child :?> Linq.JProperty
+                let pair = childProperty.Name
+                yield (getCurrencyPair(pair), parseDepth jsonObject.[pair]) ]
+    
+    let getDepthWithLimit (pairs: Pair list) (limit:int) : (Pair * Depth) list = 
+        let client = new WebClient()
+        getDepthWithCustomDownloaderLimit client.DownloadString pairs limit
+
     let parseRecentTrade (jsonObject: Newtonsoft.Json.Linq.JToken) : RecentTrade =
         JsonConvert.DeserializeObject<RecentTrade>(jsonObject.ToString())
 
