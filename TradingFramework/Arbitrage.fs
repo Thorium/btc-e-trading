@@ -35,49 +35,50 @@ module Arbitrage =
         | Right
 
     type PairTicker = {
-        transactionFee: Decimal;
-        pair: Pair;
-        sell: Decimal;
-        ask: Decimal
+        transactionFee: Decimal
+        pair: Pair
+        sell: Decimal
+        buy: Decimal
     }
 
     type Edge = { 
-        direction: EdgeDirection;
-        exchangeRate: Decimal;
-        pairTicker: PairTicker;
-        currencyPair: Pair;
-        vertices: Vertex * Vertex;
+        direction: EdgeDirection
+        exchangeRate: Decimal
+        pairTicker: PairTicker
+        currencyPair: Pair
+        vertices: Vertex * Vertex
     }
 
     type AdjacencyList = {
-        vertex: Vertex;
+        vertex: Vertex
         edges: Edge list
     }
 
     type Graph = { adjacencyLists: AdjacencyList list }
 
-    let getExchangeRate (fromCurrency: Currency) (info: PairTicker) : Decimal =
+    let getExchangeRate fromCurrency info =
         match info.pair with
-            | (left, right) when left = fromCurrency -> 
-                (new Decimal(1) / info.sell) - ((new Decimal(1) / info.sell) * (info.transactionFee / new Decimal(100)))
-            | (left, right) when right = fromCurrency -> 
-                info.ask - (info.ask * (info.transactionFee / new Decimal(100)))
-            | _ -> failwith ("From and to currencies did not match currency pair: " + currencyPairToString(info.pair))
+        | (left, right) when left = fromCurrency -> 
+            (1m / info.sell) - ((1m / info.sell) * (info.transactionFee / 100m))
+        | (left, right) when right = fromCurrency -> 
+            info.buy - (info.buy * (info.transactionFee / 100m))
+        | _ -> failwith ("From and to currencies did not match currency pair: " + currencyPairToString info.pair)
 
-    let createEdge (direction: EdgeDirection) (pair: Pair) (pairTicker: PairTicker) (vertices: Vertex list) : Edge =
-        let findVertexWithCurrency (currency: Currency) : Vertex = 
+    let createEdge direction pair pairTicker vertices =
+        let findVertexWithCurrency (currency: Currency) = 
             List.find (fun x -> x.currency = currency) vertices
 
-        let (left, right) = pair
+        let left, right = pair
+
         {
-            direction = direction;
-            exchangeRate = getExchangeRate (if direction = EdgeDirection.Left then left else right) pairTicker;
-            pairTicker = pairTicker;
-            currencyPair = pair;
-            vertices = (findVertexWithCurrency(left), findVertexWithCurrency(right))
+            direction = direction
+            exchangeRate = getExchangeRate (if direction = EdgeDirection.Left then left else right) pairTicker
+            pairTicker = pairTicker
+            currencyPair = pair
+            vertices = (findVertexWithCurrency left, findVertexWithCurrency right)
         }
 
-    let createGraph (getInfo: unit -> Info) (getPriceQuotes: Pair list -> (Pair * Quote) list) : Graph =
+    let createGraph getInfo (getPriceQuotes: Pair list -> (Pair * Quote) list) =
         let info = getInfo()
 
         let ticker = getPriceQuotes([for (pair, _) in info.pairs do yield pair ])
@@ -96,10 +97,10 @@ module Arbitrage =
                             let (left, right) = pair
 
                             let pairTicker = {
-                                transactionFee = pairInfo.fee;
-                                pair = pair;
-                                sell = quote.sell;
-                                ask = quote.buy
+                                transactionFee = pairInfo.fee
+                                pair = pair
+                                sell = quote.sell
+                                buy = quote.buy
                             }
 
                             yield createEdge EdgeDirection.Left pair pairTicker vertices
@@ -119,19 +120,19 @@ module Arbitrage =
                                 } ]
         }
 
-    let pathProfit (path: Edge list) : Decimal =
-        List.fold (fun rate edge -> rate * edge.exchangeRate) (new Decimal(1)) path
+    let pathProfit path =
+        List.fold (fun rate edge -> rate * edge.exchangeRate) 1m path
 
-    let adjacencyListForVertex (vertex: Vertex) (graph: Graph) : AdjacencyList =
+    let adjacencyListForVertex vertex graph =
         List.find (fun x -> x.vertex = vertex) graph.adjacencyLists
 
-    let adjacencyListForCurrency (currency: Currency) (graph: Graph) : AdjacencyList =
+    let adjacencyListForCurrency currency graph =
         List.find (fun x -> x.vertex.currency = currency) graph.adjacencyLists
 
-    let paths (from: AdjacencyList) (graph: Graph) (limit: int) : (Edge list) list = 
+    let paths from graph limit = 
         let finalVertex = from.vertex
 
-        let rec processList (from: Vertex) (edges: Edge list) (pairsVisited: Pair list) (edgesVisited: Edge list) : (Edge list) list = 
+        let rec processList from edges pairsVisited edgesVisited = 
             let mutable paths: Edge list list = []
 
             for edge in edges do

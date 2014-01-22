@@ -35,22 +35,22 @@ module Arbitrage =
         | Right
 
     type PairTicker = {
-        transactionFee: Decimal;
-        pair: Pair;
-        sell: Decimal;
-        ask: Decimal
+        transactionFee: Decimal
+        pair: Pair
+        sell: Decimal
+        buy: Decimal
     }
 
     type Edge = { 
-        direction: EdgeDirection;
-        exchangeRate: Decimal;
-        pairTicker: PairTicker;
-        currencyPair: Pair;
-        vertices: Vertex * Vertex;
+        direction: EdgeDirection
+        exchangeRate: Decimal
+        pairTicker: PairTicker
+        currencyPair: Pair
+        vertices: Vertex * Vertex
     }
 
     type AdjacencyList = {
-        vertex: Vertex;
+        vertex: Vertex
         edges: Edge list
     }
 

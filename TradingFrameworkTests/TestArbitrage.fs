@@ -42,7 +42,7 @@ let getAllPaths (vertex: Vertex) : (Edge list) list =
     []
 
 let getValueFromPath (path: Edge list) : Decimal =
-    new Decimal(0)
+    0m
 
 [<TestFixture>]
 type TestCurrency() = class
@@ -73,40 +73,40 @@ type TestCurrency() = class
             List.find (fun x -> x.currencyPair = pair) edges
 
         // btc->usd
-        Assert.AreEqual((new Decimal(1) / new Decimal(95.351)) - ((new Decimal(1) / new Decimal(95.351)) * new Decimal(0.002)), (getEdgeForPair btc.edges (Currency.BTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual((1m / 95.351m) - ((1m / 95.351m) * 0.002m), (getEdgeForPair btc.edges (Currency.BTC, Currency.USD)).exchangeRate)
         // btc->eur
-        Assert.AreEqual((new Decimal(1) / new Decimal(75.30001)) - ((new Decimal(1) / new Decimal(75.30001)) * new Decimal(0.002)), (getEdgeForPair btc.edges (Currency.BTC, Currency.EUR)).exchangeRate)
+        Assert.AreEqual((1m / 75.30001m) - ((1m / 75.30001m) * 0.002m), (getEdgeForPair btc.edges (Currency.BTC, Currency.EUR)).exchangeRate)
         // btc->ltc
-        Assert.AreEqual(new Decimal(0.02734) - (new Decimal(0.02734) * new Decimal(0.002)), (getEdgeForPair btc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
+        Assert.AreEqual(0.02734m - (0.02734m * 0.002m), (getEdgeForPair btc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
 
         let usd = getAdjacencyListForCurrency vertices Currency.USD
         Assert.AreEqual(3, usd.edges.Length)
         Assert.True(edgesArePairs usd [(Currency.BTC, Currency.USD);(Currency.LTC, Currency.USD);(Currency.EUR, Currency.USD)])
 
         // usd->btc
-        Assert.AreEqual(new Decimal(95.7) - (new Decimal(95.7) * new Decimal(0.002)), (getEdgeForPair usd.edges (Currency.BTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual(95.7m - (95.7m * 0.002m), (getEdgeForPair usd.edges (Currency.BTC, Currency.USD)).exchangeRate)
         // usd->ltc
-        Assert.AreEqual(new Decimal(2.62608) - (new Decimal(2.62608) * new Decimal(0.002)), (getEdgeForPair usd.edges (Currency.LTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual(2.62608m - (2.62608m * 0.002m), (getEdgeForPair usd.edges (Currency.LTC, Currency.USD)).exchangeRate)
         // usd->eur
-        Assert.AreEqual(new Decimal(1.2677) - (new Decimal(1.2677) * new Decimal(0.002)), (getEdgeForPair usd.edges (Currency.EUR, Currency.USD)).exchangeRate)
+        Assert.AreEqual(1.2677m - (1.2677m * 0.002m), (getEdgeForPair usd.edges (Currency.EUR, Currency.USD)).exchangeRate)
 
         let eur = getAdjacencyListForCurrency vertices Currency.EUR
         Assert.AreEqual(2, eur.edges.Length)
         Assert.True(edgesArePairs eur [(Currency.EUR, Currency.USD);(Currency.BTC, Currency.EUR)])
 
         // eur->usd
-        Assert.AreEqual((new Decimal(1) / new Decimal(1.25713)) - ((new Decimal(1) / new Decimal(1.25713)) * new Decimal(0.002)), (getEdgeForPair eur.edges (Currency.EUR, Currency.USD)).exchangeRate)
+        Assert.AreEqual((1m / 1.25713m) - ((1m / 1.25713m) * 0.002m), (getEdgeForPair eur.edges (Currency.EUR, Currency.USD)).exchangeRate)
         // eur->btc
-        Assert.AreEqual(new Decimal(75.71001) - (new Decimal(75.71001) * new Decimal(0.002)), (getEdgeForPair eur.edges (Currency.BTC, Currency.EUR)).exchangeRate)
+        Assert.AreEqual(75.71001m - (75.71001m * 0.002m), (getEdgeForPair eur.edges (Currency.BTC, Currency.EUR)).exchangeRate)
 
         let ltc = getAdjacencyListForCurrency vertices Currency.LTC
         Assert.AreEqual(2, ltc.edges.Length)
         Assert.True(edgesArePairs ltc [(Currency.LTC, Currency.USD);(Currency.LTC, Currency.BTC)])
 
         // ltc->usd
-        Assert.AreEqual((new Decimal(1) / new Decimal(2.610012)) - ((new Decimal(1) / new Decimal(2.610012)) * new Decimal(0.002)), (getEdgeForPair ltc.edges (Currency.LTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual((1m / 2.610012m) - ((1m / 2.610012m) * 0.002m), (getEdgeForPair ltc.edges (Currency.LTC, Currency.USD)).exchangeRate)
         // ltc->btc
-        Assert.AreEqual((new Decimal(1) / new Decimal(0.02732)) - ((new Decimal(1) / new Decimal(0.02732)) * new Decimal(0.002)), (getEdgeForPair ltc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
+        Assert.AreEqual((1m / 0.02732m) - ((1m / 0.02732m) * 0.002m), (getEdgeForPair ltc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
 
     [<Test>]
     member self.getPaths() = 
@@ -121,7 +121,7 @@ type TestCurrency() = class
         // Debug
         for path in paths do
             Console.WriteLine("")
-            let mutable i = new Decimal(1)
+            let mutable i = 1m
             for edge in path do
                 Console.Write(currencyPairToString(edge.currencyPair) + " " + edge.exchangeRate.ToString() + ", ")
             Console.Write((pathProfit path).ToString())

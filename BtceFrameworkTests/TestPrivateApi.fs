@@ -29,17 +29,17 @@ open BtceApiFramework.Currency
 open MockRequestHandler
 
 let assertValidFunds (funds: Funds) =
-    Assert.That(funds.usd = new Decimal(0))
-    Assert.That(funds.btc = new Decimal(0))
-    Assert.That(funds.ltc = new Decimal(0))
-    Assert.That(funds.nmc = new Decimal(0))
-    Assert.That(funds.rur = new Decimal(0))
-    Assert.That(funds.eur = new Decimal(0))
-    Assert.That(funds.nvc = new Decimal(0))
-    Assert.That(funds.trc = new Decimal(0))
-    Assert.That(funds.ppc = new Decimal(0))
-    Assert.That(funds.ftc = new Decimal(0))
-    Assert.That(funds.cnc = new Decimal(0))
+    Assert.That(funds.usd = 0m)
+    Assert.That(funds.btc = 0m)
+    Assert.That(funds.ltc = 0m)
+    Assert.That(funds.nmc = 0m)
+    Assert.That(funds.rur = 0m)
+    Assert.That(funds.eur = 0m)
+    Assert.That(funds.nvc = 0m)
+    Assert.That(funds.trc = 0m)
+    Assert.That(funds.ppc = 0m)
+    Assert.That(funds.ftc = 0m)
+    Assert.That(funds.cnc = 0m)
 
 let expectedParameters = [
     { required = true; parameterName = "from" };
@@ -77,7 +77,7 @@ type TestPrivateApi() = class
                 let (transactionId, transaction) = response.transactions.Head
 
                 Assert.That(transaction.transactionType = 1)
-                Assert.That(transaction.amount = new Decimal(1.50000000))
+                Assert.That(transaction.amount = 1.5m)
                 Assert.That(transaction.currency = "BTC")
                 Assert.That(transaction.desc = "BTC Payment")
                 Assert.That(transaction.status = 2)
@@ -94,11 +94,11 @@ type TestPrivateApi() = class
 
                 Assert.AreEqual(tradeId, 166830) |> ignore
 
-                Assert.That(trade.amount = new Decimal(1))
+                Assert.That(trade.amount = 1m)
                 Assert.That(trade.isYourOrder = 1)
                 Assert.That(trade.orderId = 343148)
                 Assert.That(trade.pair = "btc_usd")
-                Assert.That(trade.rate = new Decimal(1))
+                Assert.That(trade.rate = 1m)
                 Assert.That(trade.timestamp = (int64)1342445793)
                 Assert.That(trade.tradeType = "sell")
             | Error(error) -> Assert.Fail()
@@ -111,10 +111,10 @@ type TestPrivateApi() = class
 
                 Assert.AreEqual(orderId, 343152) |> ignore
 
-                Assert.That(order.amount = new Decimal(1.00000001))
+                Assert.That(order.amount = 1.00000001m)
                 Assert.That(order.orderType = "sell")
                 Assert.That(order.pair = "btc_usd")
-                Assert.That(order.rate = new Decimal(3.05))
+                Assert.That(order.rate = 3.05m)
                 Assert.That(order.timestampCreated = (int64)1342448420)
                 Assert.That(order.status = 0)
             | Error(error) -> Assert.Fail()
@@ -124,8 +124,8 @@ type TestPrivateApi() = class
         let parameters = [
             Pair(Currency.BTC, Currency.LTC);
             Type(TradeType.Buy);
-            Rate(new Decimal(1));
-            Amount(new Decimal(1))
+            Rate(1m);
+            Amount(1m)
         ]
 
         match tradeWithCustomRequestHandler mockRequestHandler key secret parameters with
@@ -133,8 +133,8 @@ type TestPrivateApi() = class
                 assertValidFunds(response.funds)
 
                 Assert.That(response.orderId = 0)
-                Assert.That(response.received = new Decimal(0.1))
-                Assert.That(response.remains = new Decimal(0))
+                Assert.That(response.received = 0.1m)
+                Assert.That(response.remains = 0m)
             | Error(error) -> Assert.Fail()
 
     [<Test>]
@@ -155,7 +155,7 @@ type TestPrivateApi() = class
         let parameters: Parameter list = [
             From(10);
             Count(50);
-            Amount(new Decimal(50.5));
+            Amount(50.5m);
             Since((int64)67);
             Pair((Currency.BTC, Currency.LTC))
         ]
@@ -168,7 +168,7 @@ type TestPrivateApi() = class
         let parameters: Parameter list = [
             From(10);
             Count(50);
-            Amount(new Decimal(50.5));
+            Amount(50.5m);
             Since((int64)67);
             Pair((Currency.BTC, Currency.LTC));
             Count(50)
@@ -182,7 +182,7 @@ type TestPrivateApi() = class
         let parameters: Parameter list = [
             From(10);
             Count(50);
-            Amount(new Decimal(50.5));
+            Amount(50.5m);
             Since((int64)67)
         ]
 
@@ -194,7 +194,7 @@ type TestPrivateApi() = class
         let parameters: Parameter list = [
             From(10);
             Count(50);
-            Amount(new Decimal(50.5));
+            Amount(50.5m);
             Since((int64)67);
             Pair((Currency.BTC, Currency.LTC));
             End((int64)77)
