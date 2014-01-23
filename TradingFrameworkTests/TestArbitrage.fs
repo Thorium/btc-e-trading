@@ -49,11 +49,11 @@ type TestCurrency() = class
     (*
         Exchange rate calculations for mock data:
 
-        btc->usd=(1.0 / 95.351) - ((1.0 / 95.351) * (0.2 / 100))        usd->btc=95.7 - (95.7 * (0.2 / 100))
-        btc->eur=(1.0 / 75.30001) - ((1.0 / 75.30001) * (0.2 / 100))    eur->btc=75.71001 - (75.71001 * (0.2 / 100))
-        ltc->btc=(1.0 / 0.02732) - ((1.0 / 0.02732) * (0.2 / 100))      btc->ltc=0.02734 - (0.02734 * (0.2 / 100))
-        ltc->usd=(1.0 / 2.610012) - ((1.0 / 2.610012) * (0.2 / 100))    usd->ltc=2.62608 - (2.62608 * (0.2 / 100))
-        eur->usd=(1.0 / 1.25713) - ((1.0 / 1.25713) * (0.2 / 100))      usd->eur=1.2677 - (1.2677 * (0.2 / 100))
+        btc->usd=95.351 - (95.351 * (0.2 / 100))            usd->btc=(1.0 / 95.7) - ((1.0 / 95.7) * (0.2 / 100))
+        btc->eur=75.30001 - (75.30001 * (0.2 / 100))        eur->btc=(1.0 / 75.71001) - ((1.0 / 75.71001) * (0.2 / 100))
+        ltc->btc=0.02732 - (0.02732 * (0.2 / 100))          btc->ltc=(1.0 / 0.02734) - ((1.0 / 0.02734) * (0.2 / 100))
+        ltc->usd=2.610012 - (2.610012 * (0.2 / 100))        usd->ltc=(1.0 / 2.62608) - ((1.0 / 2.62608) * (0.2 / 100))
+        eur->usd=1.25713 - (1.25713 * (0.2 / 100))          usd->eur=(1.0 / 1.2677) - ((1.0 / 1.2677) * (0.2 / 100))
     *)
     [<Test>]
     member self.createArbitrageGraph() = 
@@ -73,40 +73,40 @@ type TestCurrency() = class
             List.find (fun x -> x.currencyPair = pair) edges
 
         // btc->usd
-        Assert.AreEqual((1m / 95.351m) - ((1m / 95.351m) * 0.002m), (getEdgeForPair btc.edges (Currency.BTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual(95.351m - (95.351m * (0.2m / 100m)), (getEdgeForPair btc.edges (Currency.BTC, Currency.USD)).exchangeRate)
         // btc->eur
-        Assert.AreEqual((1m / 75.30001m) - ((1m / 75.30001m) * 0.002m), (getEdgeForPair btc.edges (Currency.BTC, Currency.EUR)).exchangeRate)
+        Assert.AreEqual(75.30001m - (75.30001m * (0.2m / 100m)), (getEdgeForPair btc.edges (Currency.BTC, Currency.EUR)).exchangeRate)
         // btc->ltc
-        Assert.AreEqual(0.02734m - (0.02734m * 0.002m), (getEdgeForPair btc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
+        Assert.AreEqual((1m / 0.02734m) - ((1m / 0.02734m) * (0.2m / 100m)), (getEdgeForPair btc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
 
         let usd = getAdjacencyListForCurrency vertices Currency.USD
         Assert.AreEqual(3, usd.edges.Length)
         Assert.True(edgesArePairs usd [(Currency.BTC, Currency.USD);(Currency.LTC, Currency.USD);(Currency.EUR, Currency.USD)])
 
         // usd->btc
-        Assert.AreEqual(95.7m - (95.7m * 0.002m), (getEdgeForPair usd.edges (Currency.BTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual((1m / 95.7m) - ((1m / 95.7m) * (0.2m / 100m)), (getEdgeForPair usd.edges (Currency.BTC, Currency.USD)).exchangeRate)
         // usd->ltc
-        Assert.AreEqual(2.62608m - (2.62608m * 0.002m), (getEdgeForPair usd.edges (Currency.LTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual((1m / 2.62608m) - ((1m / 2.62608m) * (0.2m / 100m)), (getEdgeForPair usd.edges (Currency.LTC, Currency.USD)).exchangeRate)
         // usd->eur
-        Assert.AreEqual(1.2677m - (1.2677m * 0.002m), (getEdgeForPair usd.edges (Currency.EUR, Currency.USD)).exchangeRate)
+        Assert.AreEqual((1m / 1.2677m) - ((1m / 1.2677m) * (0.2m / 100m)), (getEdgeForPair usd.edges (Currency.EUR, Currency.USD)).exchangeRate)
 
         let eur = getAdjacencyListForCurrency vertices Currency.EUR
         Assert.AreEqual(2, eur.edges.Length)
         Assert.True(edgesArePairs eur [(Currency.EUR, Currency.USD);(Currency.BTC, Currency.EUR)])
 
         // eur->usd
-        Assert.AreEqual((1m / 1.25713m) - ((1m / 1.25713m) * 0.002m), (getEdgeForPair eur.edges (Currency.EUR, Currency.USD)).exchangeRate)
+        Assert.AreEqual(1.25713m - (1.25713m * (0.2m / 100m)), (getEdgeForPair eur.edges (Currency.EUR, Currency.USD)).exchangeRate)
         // eur->btc
-        Assert.AreEqual(75.71001m - (75.71001m * 0.002m), (getEdgeForPair eur.edges (Currency.BTC, Currency.EUR)).exchangeRate)
+        Assert.AreEqual((1m / 75.71001m) - ((1m / 75.71001m) * (0.2m / 100m)), (getEdgeForPair eur.edges (Currency.BTC, Currency.EUR)).exchangeRate)
 
         let ltc = getAdjacencyListForCurrency vertices Currency.LTC
         Assert.AreEqual(2, ltc.edges.Length)
         Assert.True(edgesArePairs ltc [(Currency.LTC, Currency.USD);(Currency.LTC, Currency.BTC)])
 
         // ltc->usd
-        Assert.AreEqual((1m / 2.610012m) - ((1m / 2.610012m) * 0.002m), (getEdgeForPair ltc.edges (Currency.LTC, Currency.USD)).exchangeRate)
+        Assert.AreEqual(2.610012m - (2.610012m * (0.2m / 100m)), (getEdgeForPair ltc.edges (Currency.LTC, Currency.USD)).exchangeRate)
         // ltc->btc
-        Assert.AreEqual((1m / 0.02732m) - ((1m / 0.02732m) * 0.002m), (getEdgeForPair ltc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
+        Assert.AreEqual(0.02732m - (0.02732m * (0.2m / 100m)), (getEdgeForPair ltc.edges (Currency.LTC, Currency.BTC)).exchangeRate)
 
     [<Test>]
     member self.getPaths() = 

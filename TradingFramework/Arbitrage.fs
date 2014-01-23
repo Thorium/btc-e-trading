@@ -59,9 +59,9 @@ module Arbitrage =
     let getExchangeRate fromCurrency info =
         match info.pair with
         | (left, right) when left = fromCurrency -> 
-            (1m / info.sell) - ((1m / info.sell) * (info.transactionFee / 100m))
+            info.sell - (info.sell * (info.transactionFee / 100m))
         | (left, right) when right = fromCurrency -> 
-            info.buy - (info.buy * (info.transactionFee / 100m))
+            (1m / info.buy) - ((1m / info.buy) * (info.transactionFee / 100m))
         | _ -> failwith ("From and to currencies did not match currency pair: " + currencyPairToString info.pair)
 
     let createEdge direction pair pairTicker vertices =

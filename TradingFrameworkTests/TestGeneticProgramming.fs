@@ -496,10 +496,10 @@ type TestGeneticProgramming() = class
         let tree = { root = root }
 
         // Branch
-        Assert.Throws((fun _ -> (selectNode 999 (fun x -> 3) tree) |> ignore)) |> ignore
+        Assert.AreEqual(None, selectNode 999 (fun x -> 3) tree)
 
         // Leaf
-        Assert.Throws((fun _ -> (selectNode 999 (fun x -> if x = 999 then 1 else 2) tree) |> ignore)) |> ignore
+        Assert.AreEqual(None, selectNode 999 (fun x -> if x = 999 then 1 else 2) tree)
 
     [<Test>]
     member self.selectRootNode() = 

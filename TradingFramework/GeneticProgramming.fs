@@ -253,14 +253,6 @@ module GeneticProgramming =
     /// Finds the node at the given location by walking down (depth first) from the given root node.
     /// </summary>
     let walkToNode position root =
-        let fail () =
-            let nodeType, position = 
-                match position with
-                | BranchPosition(position) -> "Branch", position.ToString()
-                | LeafPosition(position) -> "Leaf", position.ToString()
-
-            failwith <| nodeType + " position " + position + " did not exist in the tree."
-
         let rec walkChildren walk = function
         | child :: children -> 
             match walk child with
