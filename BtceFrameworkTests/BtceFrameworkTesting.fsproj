@@ -44,12 +44,14 @@
     <Compile Include="TestPublicApi.fs" />
     <Compile Include="TestCurrency.fs" />
     <None Include="README.md" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="nunit.framework">
-      <HintPath>C:\Users\matthewm\Documents\Visual Studio 2010\Projects\Trading\TradingFrameworkTesting\obj\nunit.framework.dll</HintPath>
+      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

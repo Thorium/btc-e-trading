@@ -27,9 +27,6 @@ module Window =
     open System.Windows.Controls
     open System.Windows.Forms.Integration
  
-    open Evolve
-    open LoadFileLayout
- 
     open TradingGraph.GraphControl
  
     open TradingFramework.PatternRecognitionGP

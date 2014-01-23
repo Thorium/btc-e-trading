@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>TA-Lib</id>
+    <version>0.5.0.3</version>
+    <title>TA-Lib</title>
+    <authors>TicTacTec LLC</authors>
+    <owners>TicTacTec LLC</owners>
+    <projectUrl>http://ta-lib.org/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Widely used by trading software developers requiring to perform technical analysis of financial market data. Includes 200 indicators such as ADX, MACD, RSI, Stochastic, Bollinger Bands etc... Candlestick pattern recognition. Open-source API for C/C++, Java, Perl, Python and 100% Managed .NET</description>
+    <summary>Technical Analysis Library</summary>
+    <releaseNotes>Sources and symbols uploaded to symbolsource.org</releaseNotes>
+    <copyright>Copyright © TicTacTec 2006</copyright>
+    <language />
+    <tags>financial market data analysis</tags>
+  </metadata>
+</package>

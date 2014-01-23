@@ -44,6 +44,7 @@
     <Compile Include="PatternRecognitionGP.fsi" />
     <Compile Include="PatternRecognitionGP.fs" />
     <None Include="README.md" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -51,9 +52,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="TA-Lib-Core">
-      <HintPath>obj\TA-Lib-Core.dll</HintPath>
-    </Reference>
     <ProjectReference Include="..\BtceFramework\BtceFramework.fsproj">
       <Name>BtceFramework</Name>
       <Project>{480853fb-47b3-4a0e-89c4-9b87c6ab8e6a}</Project>
@@ -64,6 +62,9 @@
       <Project>{945ce3da-731a-4e4a-bf0e-680b1e26afb5}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="TA-Lib-Core">
+      <HintPath>..\packages\TA-Lib.0.5.0.3\lib\TA-Lib-Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
