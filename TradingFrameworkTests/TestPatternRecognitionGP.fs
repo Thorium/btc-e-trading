@@ -38,10 +38,6 @@ type TestPatternRecognitionGeneticProgramming() = class
         Assert.AreEqual(16, evaluateActions actions <| decimal(10))
 
     [<Test>]
-    member self.evaluateTree() = 
-        Assert.Fail()
-
-    [<Test>]
     member self.readIntervalData() =
         let quote x : BtceApiFramework.PublicBtceApi.Quote = 
             {
@@ -86,10 +82,6 @@ type TestPatternRecognitionGeneticProgramming() = class
         Assert.AreEqual([| 1;1;1 |], data.low)
 
     [<Test>]
-    member self.fitness() =
-        Assert.Fail()
-
-    [<Test>]
     member self.mutateValue() =
         let result = mutateValue (fun x -> if x = 2 then 0 else 2) 92 5 100 -100
         Assert.AreEqual(94, result)
@@ -108,12 +100,4 @@ type TestPatternRecognitionGeneticProgramming() = class
 
         let result = mutateValue (fun x -> if x = 2 then 1 else x) 3 5 100 0
         Assert.AreEqual(0, result)
-
-    [<Test>]
-    member self.mutateFunctionArguments() =
-        Assert.Fail()
-
-    [<Test>]
-    member self.generateRandomFunc() =
-        Assert.Fail()
 end
